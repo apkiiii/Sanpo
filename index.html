@@ -387,7 +387,6 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
       <button class="rbtn" id="b-map" aria-label="Changer de carte"><span class="ic" data-ic="map"></span></button>
       <button class="rbtn" id="b-wx" aria-label="Météo"><span class="ic" id="wx-ic" data-ic="sun"></span></button>
       <button class="rbtn" id="b-music" aria-label="Musique lo-fi"><span class="ic" data-ic="music"></span><span class="lb" hidden>Lo-Fi</span></button>
-      <button class="rbtn" id="b-real" aria-label="Marche réelle"><span class="ic" data-ic="steps"></span><span class="lb" hidden>Marche réelle</span></button>
     </div>
     <div class="seg pop" id="wx" hidden>
       <button id="w-sun" data-w="sun"><span class="ic" data-ic="sun"></span>Soleil</button>
@@ -409,7 +408,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
     <div class="setrow"><label for="s-name">Nom du chat</label><input id="s-name" maxlength="12" autocomplete="off" spellcheck="false"></div>
     <button class="btn" id="s-tuto">Revoir le tutoriel</button>
     <button class="btn danger" id="s-reset">Recommencer à zéro</button>
-    <p class="ver" id="pdiag">SANPO v1.4 · podomètre inactif</p>
+    <p class="ver" id="pdiag">SANPO v1.5 · podomètre inactif</p>
     <h3>Labo de test</h3>
     <button class="btn" id="b-idle">3 jours inactif</button>
     <button class="btn" id="b-over">Game Over</button>
@@ -906,14 +905,15 @@ function realStep(k=1){if(go!=null)return;const old=S.total;checkDay();S.dly.w+=
 function flushPend(){if(pend){S.coins+=Math.round(pend/10*[1,.7,.4][stage(S.weight)]);S.weight=Math.max(0,S.weight-pend*11/500);pend=0}save();updHUD()}
 async function grabWake(){try{if(pedo&&document.visibilityState==='visible'&&navigator.wakeLock)wake=await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')grabWake();else if(pedo)flushPend()});
-async function togglePedo(){const b=$('#b-real');
- if(pedo){pedo=false;removeEventListener('devicemotion',onMotion);try{wake&&wake.release()}catch(e){}b.querySelector('.lb').textContent='Marche réelle';b.classList.remove('on');flushPend();toast(`Balade terminée · ${sess.toLocaleString('fr-FR')} pas comptés`);return}
- try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){if(await DeviceMotionEvent.requestPermission()!=='granted'){toast('Accès aux mouvements refusé. Autorise-le dans les réglages du navigateur.');return}}}catch(e){toast('Accès aux mouvements refusé.');return}
- feed=makePedo(n=>realStep(n),{min:SENS[S.sens||'mid']});sess=0;pedo=true;gotMotion=false;addEventListener('devicemotion',onMotion);b.querySelector('.lb').textContent='Podomètre actif';b.classList.add('on');
- grabWake();updHUD();toast('Podomètre activé : marche, les premiers pas comptent après quelques secondes.');
- setTimeout(()=>{if(pedo&&!gotMotion){togglePedo();toast('Capteur de mouvement indisponible ici. Ouvre SANPO dans le navigateur du téléphone.')}},3000)}
-$('#b-real').onclick=togglePedo;
-setInterval(()=>{if(pedo)updHUD();const q=feed&&feed.st,d=$('#pdiag');if(d)d.textContent=pedo?`SANPO v1.4 · capteur ${gotMotion?Math.round(q?q.hz:0)+' Hz':'muet'} · signal ${q?q.env.toFixed(2):'–'} · seuil ${q?q.thr.toFixed(2):'–'} · ${q&&q.walking?'marche détectée':'recherche ('+(q?q.run:0)+'/5)'}`:'SANPO v1.4 · podomètre inactif'},500);
+/* podomètre automatique : démarre au premier toucher (exigé par iOS), sans bouton */
+let pedoTry=0;
+async function startPedo(){if(pedo||pedoTry>1)return;pedoTry++;
+ try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){if(await DeviceMotionEvent.requestPermission()!=='granted'){toast('Autorise l’accès aux mouvements pour compter tes pas.');return}}}catch(e){return}
+ if(typeof DeviceMotionEvent==='undefined')return;
+ feed=makePedo(n=>realStep(n),{min:SENS[S.sens||'mid']});sess=0;pedo=true;gotMotion=false;addEventListener('devicemotion',onMotion);grabWake();updHUD();
+ setTimeout(()=>{if(pedo&&!gotMotion){pedo=false;removeEventListener('devicemotion',onMotion);updHUD()}else if(pedo)toast('Podomètre actif : marche, ton chat avance avec toi.')},3000)}
+document.addEventListener('pointerdown',()=>{if(!pedo&&splash.hidden)startPedo()},{passive:true});
+setInterval(()=>{if(pedo)updHUD();const q=feed&&feed.st,d=$('#pdiag');if(d)d.textContent=pedo?`SANPO v1.5 · capteur ${gotMotion?Math.round(q?q.hz:0)+' Hz':'muet'} · signal ${q?q.env.toFixed(2):'–'} · seuil ${q?q.thr.toFixed(2):'–'} · ${q&&q.walking?'marche détectée':'recherche ('+(q?q.run:0)+'/5)'}`:'SANPO v1.5 · podomètre inactif'},500);
 /* ============ FX KAWAII : cœurs, gains, confettis, sons ============ */
 let sfx=null;
 function ensureAC(){try{if(!AC)initAudio();if(AC.state==='suspended')AC.resume()}catch(e){}}
@@ -945,7 +945,7 @@ function fxDraw(){hearts.forEach(h=>{X.globalAlpha=Math.min(1,h.l*1.6);heart(h.x
 C.addEventListener('click',e=>{const r=C.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(Math.abs(x-catX)<42*K&&y>CGY-120*K&&y<CGY+10)petCat()});
 document.addEventListener('click',e=>{if(e.target.closest('button')&&AC)popSfx()},true);
 const splash=$('#splash');
-function startGame(music){ensureAC();{const v=$('#cat-name').value.trim();if(v)S.name=v;save();updHUD()}splash.classList.add('out');setTimeout(()=>splash.hidden=true,550);if(music&&!musicOn)toggleMusic();setTimeout(petCat,450);setTimeout(()=>S.tuto?omikuji():tutorial(0),900)}
+function startGame(music){startPedo();ensureAC();{const v=$('#cat-name').value.trim();if(v)S.name=v;save();updHUD()}splash.classList.add('out');setTimeout(()=>splash.hidden=true,550);if(music&&!musicOn)toggleMusic();setTimeout(petCat,450);setTimeout(()=>S.tuto?omikuji():tutorial(0),900)}
 $('#b-start').onclick=()=>startGame(true);$('#b-start2').onclick=()=>startGame(false);
 
 /* ============ PROGRESSION : niveaux, missions du jour, série, garde-robe ============ */
