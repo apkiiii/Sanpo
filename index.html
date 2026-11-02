@@ -688,8 +688,8 @@ function drawDrops(){for(const d of drops){
 
 /* ============ BOUCLE ============ */
 function update(dt){const st=stage(cw),live=typeof pedo!=='undefined'&&pedo&&performance.now()-lastStep<1300,walking=(disp<S.steps-.5||live)&&go==null;
- if(walking){disp=Math.min(S.steps,disp+(live?Math.max(2.2,(S.steps-disp)*1.5):[260,150,110][st])*dt);ph+=dt*(live?7:[9,6,4][st])}else if(disp>S.steps)disp=S.steps;
- mv+=((walking?1:0)-mv)*Math.min(1,dt*6);scroll=disp*.75;
+ if(walking){disp=Math.min(S.steps,disp+(live?Math.max(2.2,(S.steps-disp)*1.5):[260,150,110][st])*dt);ph+=dt*(live?7:[9,6,4][st]);scroll+=(live?[70,52,38][st]:[195,112,82][st])*dt}else if(disp>S.steps)disp=S.steps;
+ mv+=((walking?1:0)-mv)*Math.min(1,dt*6);
  cw+=(S.weight-cw)*Math.min(1,dt*(walking?2.2:1.2));
  const s=Math.sin(ph);if(walking&&st<2&&Math.sign(s)!==Math.sign(prevS))foot.push({wx:scroll+catX+(s>0?10:-2)*K,y:CGY-1,l:1});prevS=s;
  if(walking&&st===2&&Math.random()<dt*8)foot.push({wx:scroll+catX-30*K,y:CGY-1,l:1});
