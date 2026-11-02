@@ -361,6 +361,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
 #maptitle.go{animation:mt 2.6s ease both}
 @keyframes mt{0%{opacity:0;transform:translateY(14px) scale(.96);filter:blur(6px)}18%,70%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-10px)}}
 .chip.pedo{background:#29b987}
+.ver{grid-column:1/-1;margin:0;font:600 11px var(--f-body);color:var(--muted)}
 </style>
 
 <div id="app">
@@ -408,6 +409,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
     <div class="setrow"><label for="s-name">Nom du chat</label><input id="s-name" maxlength="12" autocomplete="off" spellcheck="false"></div>
     <button class="btn" id="s-tuto">Revoir le tutoriel</button>
     <button class="btn danger" id="s-reset">Recommencer à zéro</button>
+    <p class="ver" id="pdiag">SANPO v1.4 · podomètre inactif</p>
     <h3>Labo de test</h3>
     <button class="btn" id="b-idle">3 jours inactif</button>
     <button class="btn" id="b-over">Game Over</button>
@@ -767,7 +769,7 @@ function updHUD(){const ls=$('#ls');if(!ls.children.length)for(let i=0;i<10;i++)
  const nx=CITIES[S.cards];$('#lcap').textContent=nx?`Vers ${nx.n}`:'Carnet complet';{const pr=nx?(S.total%1e4)/1e4:1;$('#lfill').style.width=(pr*100)+'%';$('#lval').textContent=Math.floor(pr*100)+' %'}
  $('#day').textContent=new Date(S.sim).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
  $('#gfill').style.width=Math.max(3,S.weight)+'%';$('#gstate').textContent=STATES[stage(S.weight)];$('#fitbar').dataset.s=stage(S.weight);
- const ch=[];if(S.auto)ch.push(`<span class="chip live">${LIVE?`直 ${LIVE.city} · ${LIVE.t}°C · ${LIVE.desc}`:wxMsg}</span>`);if(typeof pedo!=='undefined'&&pedo)ch.push(`<span class="chip pedo">● Podomètre · ${sess.toLocaleString('fr-FR')} pas</span>`);if(S.streak)ch.push(`<span class="chip fire">炎 Série ${S.streak} j</span>`);if(S.tea>S.sim)ch.push('<span class="chip">茶 Poids gelé 24 h</span>');if(S.ins)ch.push(`<span class="chip">保 Assurance ×${S.ins}</span>`);
+ const ch=[];if(S.auto)ch.push(`<span class="chip live">${LIVE?`直 ${LIVE.city} · ${LIVE.t}°C · ${LIVE.desc}`:wxMsg}</span>`);if(typeof pedo!=='undefined'&&pedo){const q=feed&&feed.st;ch.push(`<span class="chip pedo">● ${sess.toLocaleString('fr-FR')} pas · ${!gotMotion?'attente du capteur':q&&q.walking?'tu marches':'cherche ton rythme…'}</span>`)}if(S.streak)ch.push(`<span class="chip fire">炎 Série ${S.streak} j</span>`);if(S.tea>S.sim)ch.push('<span class="chip">茶 Poids gelé 24 h</span>');if(S.ins)ch.push(`<span class="chip">保 Assurance ×${S.ins}</span>`);
  if(blueHour())ch.push('<span class="chip blue">Heure bleue · Maneki-neko</span>');if(S.weight>=70)ch.push('<span class="chip warn">Il bloque la ruelle — marche !</span>');
  $('#chips').innerHTML=ch.join('');
  document.querySelectorAll('#wx button').forEach(b=>b.setAttribute('aria-pressed',S.auto?b.dataset.w==='auto':b.dataset.w===S.weather));
@@ -885,7 +887,7 @@ async function openMeteo(){try{let lat,lon,name=S.city;
 function makePedo(onStep,opt={}){let g=null,s=0,env=.8,armed=false,last=0,prevDt=0,run=[],walking=false,lt=null;const MIN=opt.min||.42;
  return function feed(t,ax,ay,az){if(lt===null){lt=t;g=Math.hypot(ax,ay,az);return}let dt=(t-lt)/1000;lt=t;if(dt<=0)return;if(dt>.25)dt=.25;
   const m=Math.hypot(ax,ay,az);g+=(m-g)*(1-Math.exp(-dt/1.0));const d=m-g;s+=(d-s)*(1-Math.exp(-dt/.06));
-  env+=(Math.abs(s)-env)*(1-Math.exp(-dt/1.5));const thr=Math.max(MIN,env*.9);
+  env+=(Math.abs(s)-env)*(1-Math.exp(-dt/1.5));const thr=Math.max(MIN,env*.9);feed.st={walking,run:run.length,env,thr,hz:feed.st?feed.st.hz*.95+(1/dt)*.05:1/dt};
   if(!armed&&s<-thr*.3)armed=true;
   if(armed&&s>thr){armed=false;const iv=(t-last)/1000;
    if(last&&iv<.3){last=t;walking=false;run=[];prevDt=0;return} // secousse : trop rapide pour un pas
@@ -911,6 +913,7 @@ async function togglePedo(){const b=$('#b-real');
  grabWake();updHUD();toast('Podomètre activé : marche, les premiers pas comptent après quelques secondes.');
  setTimeout(()=>{if(pedo&&!gotMotion){togglePedo();toast('Capteur de mouvement indisponible ici. Ouvre SANPO dans le navigateur du téléphone.')}},3000)}
 $('#b-real').onclick=togglePedo;
+setInterval(()=>{if(pedo)updHUD();const q=feed&&feed.st,d=$('#pdiag');if(d)d.textContent=pedo?`SANPO v1.4 · capteur ${gotMotion?Math.round(q?q.hz:0)+' Hz':'muet'} · signal ${q?q.env.toFixed(2):'–'} · seuil ${q?q.thr.toFixed(2):'–'} · ${q&&q.walking?'marche détectée':'recherche ('+(q?q.run:0)+'/5)'}`:'SANPO v1.4 · podomètre inactif'},500);
 /* ============ FX KAWAII : cœurs, gains, confettis, sons ============ */
 let sfx=null;
 function ensureAC(){try{if(!AC)initAudio();if(AC.state==='suspended')AC.resume()}catch(e){}}
