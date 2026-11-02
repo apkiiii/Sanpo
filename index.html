@@ -391,6 +391,34 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
 @keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
 .chestbig.shake{animation:shk .12s linear infinite}@keyframes shk{0%{transform:translate(-4px,0) rotate(-4deg)}50%{transform:translate(4px,-2px) rotate(4deg)}100%{transform:translate(-4px,0) rotate(-4deg)}}
 .mapc.locked{filter:grayscale(.75);opacity:.75}.mapc em.lk{background:rgba(0,0,0,.35);color:#fff}
+
+.pills{display:flex;gap:6px;align-items:center}
+#hud .gem{display:flex;align-items:center;gap:4px;border:0;background:linear-gradient(#eaf7ff,#cdeeff);border-radius:999px;padding:6px 8px 6px 6px;font:800 14px var(--f-body);color:#0f5f8f;box-shadow:inset 0 1px 0 #fff,0 2px 8px rgba(30,120,200,.18);cursor:pointer;pointer-events:auto;font-variant-numeric:tabular-nums}
+#hud .gem .ic svg{width:19px;height:19px}#hud .gem b{width:16px;height:16px;border-radius:50%;background:#2a8fd0;color:#fff;font-size:12px;line-height:16px;text-align:center}
+body.isplus .avatar{position:relative}body.isplus .avatar::after{content:"♛";position:absolute;top:-10px;left:12px;color:#f2b631;font-size:16px;text-shadow:0 1px 0 #7a5400}
+body.isplus #who{background:linear-gradient(90deg,#c98a00,#f2b631);-webkit-background-clip:text;background-clip:text;color:transparent}
+.plusban{width:100%;display:flex;align-items:center;gap:10px;border:0;border-radius:18px;padding:12px 14px;margin:2px 0 12px;cursor:pointer;text-align:left;color:#fff;background:linear-gradient(120deg,#2b2140,#5b3fb5 60%,#c98a00);box-shadow:0 10px 22px rgba(43,33,64,.3)}
+.plusban b{font:800 15px var(--f-body);color:#ffd76a;letter-spacing:.04em}.plusban span{flex:1;font:600 12px/1.35 var(--f-body);opacity:.95}.plusban em{font-style:normal;font:800 12px var(--f-body);background:#ffd76a;color:#2b2140;padding:6px 11px;border-radius:999px}
+.offer{display:flex;align-items:center;gap:10px;border-radius:20px;padding:12px 14px;margin-bottom:6px;background:linear-gradient(120deg,#ffe2c4,#ffc0d6);box-shadow:var(--sh-s)}
+.offer div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.offer b{font:800 16px var(--f-body)}.offer small{font:600 12px var(--f-body);color:#6b4a5a}
+.otag{align-self:flex-start;font:800 10.5px var(--f-body);background:#e5484d;color:#fff;padding:3px 8px;border-radius:999px;animation:pulse .9s infinite alternate}
+.offer .btn{flex-direction:column;gap:0;line-height:1.1}.offer s{font-size:10px;opacity:.75;font-weight:600}
+.gemgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gempack{position:relative;border:0;border-radius:16px;background:#fff;box-shadow:var(--sh-s);padding:16px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--ink)}
+.gempack .ic svg{width:30px;height:30px}.gempack b{font:800 14px var(--f-body)}.gempack em{font-style:normal;font:700 11px var(--f-body);color:var(--muted)}
+.gempack i{position:absolute;top:-7px;left:50%;transform:translateX(-50%);white-space:nowrap;font:800 9px var(--f-body);font-style:normal;background:linear-gradient(90deg,#ff6f9d,#a06bff);color:#fff;padding:2px 7px;border-radius:999px}
+.demo{font:600 11px/1.45 var(--f-body);color:var(--muted);text-align:center;margin:12px 0 0}
+.pay{text-align:center}.pay .price{font:800 34px var(--f-body);margin:6px 0 16px}
+.paybtn{width:100%;border:0;border-radius:14px;background:#111;color:#fff;font:700 16px var(--f-body);padding:15px;margin-bottom:8px;cursor:pointer}.paybtn.busy{opacity:.7}
+.pay .check{width:76px;height:76px;margin:6px auto 10px;border-radius:50%;background:#29b987;color:#fff;font:800 40px/76px var(--f-body);animation:popbig .7s cubic-bezier(.2,1.6,.4,1)}
+.plushero{text-align:center;border-radius:22px;padding:18px 10px 16px;margin-bottom:12px;color:#fff;background:linear-gradient(135deg,#2b2140,#5b3fb5 55%,#c98a00);box-shadow:0 12px 26px rgba(43,33,64,.3)}
+.plushero .crown{display:block;font-size:34px;color:#ffd76a;line-height:1}.plushero b{display:block;font:800 28px var(--f-body);letter-spacing:.04em;color:#ffd76a}.plushero small{font:600 13px var(--f-body);opacity:.9}
+.perks{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:8px}
+.perks li{display:flex;align-items:center;gap:10px;font:700 13.5px var(--f-body)}.perks i{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font:800 13px var(--f-disp);font-style:normal;color:#fff;background:linear-gradient(135deg,#a06bff,#ff6f9d)}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.plan{position:relative;border:2px solid #e6def2;border-radius:18px;background:#fff;padding:14px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--ink)}
+.plan.sel{border-color:#8b6cff;box-shadow:0 0 0 3px rgba(139,108,255,.2)}.plan b{font:800 14px var(--f-body)}.plan span{font:800 16px var(--f-body)}.plan small{font:600 11px var(--f-body);color:var(--muted)}
+.plan i{position:absolute;top:-9px;font:800 10px var(--f-body);font-style:normal;background:#29b987;color:#fff;padding:2px 8px;border-radius:999px}
 </style>
 
 <div id="app">
@@ -401,7 +429,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
         <div class="tc-row">
           <span class="avatar" data-logo></span>
           <div class="who"><b id="who">Tama</b><span id="lvl">Niveau 1</span><div class="xp"><i id="xpf"></i></div></div>
-          <div class="coin"><span class="ic" data-ic="coin"></span><span id="coin">0</span></div>
+          <div class="pills"><button class="gem" id="gempill" aria-label="Gemmes"><span class="ic" data-ic="gem"></span><span id="gem">0</span><b>+</b></button><div class="coin"><span class="ic" data-ic="coin"></span><span id="coin">0</span></div></div>
         </div>
         <div class="tc-row meters">
           <div class="meter"><div class="m-top"><span id="lcap">Vers Tokyo</span><span id="lval">0 %</span></div><div class="bar"><i id="lfill"></i></div></div>
@@ -438,7 +466,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
     <div class="setrow"><label for="s-name">Nom du chat</label><input id="s-name" maxlength="12" autocomplete="off" spellcheck="false"></div>
     <button class="btn" id="s-tuto">Revoir le tutoriel</button>
     <button class="btn danger" id="s-reset">Recommencer à zéro</button>
-    <p class="ver" id="pdiag">SANPO v2.0 · podomètre inactif</p>
+    <p class="ver" id="pdiag">SANPO v2.1 · podomètre inactif</p>
     <h3>Labo de test</h3>
     <button class="btn" id="b-idle">3 jours inactif</button>
     <button class="btn" id="b-over">Game Over</button>
@@ -474,7 +502,7 @@ const DREAMS=['Il a rêvé d’un bol de ramen grand comme le Fuji, et il n’en
  'Un Maneki-neko lui a confié un secret : la lune est un mochi qu’on n’a pas le droit de manger.',
  'Il a suivi une lanterne flottante jusqu’à la mer, puis il est rentré à pied.',
  'Il comptait les pétales de sakura au lieu des moutons. Il en a compté beaucoup.'];
-let S={steps:1200,total:7200,coins:420,weight:12,tea:0,ins:0,cards:0,sim:Date.now(),sleepSteps:1200,weather:'sun',blue:false,auto:true,city:'Paris',name:'Tama',fur:'blanc',acc:'',owned:[],dayKey:'',dly:{w:0,p:0,m:0,c:[0,0,0]},streak:0,streakDay:'',map:'tokyo',claimed:[],chests:0,chestProg:0,trail:'sakura',trails:['sakura'],emotes:['wave'],maps:[],boost:0,goal:6000,hist:{},ach:[],pets:0,manekis:0,sfx:true};let LIVE=null;const fadeCv=document.createElement('canvas');let fadeA=0;
+let S={steps:1200,total:7200,coins:420,weight:12,tea:0,ins:0,cards:0,sim:Date.now(),sleepSteps:1200,weather:'sun',blue:false,auto:true,city:'Paris',name:'Tama',fur:'blanc',acc:'',owned:[],dayKey:'',dly:{w:0,p:0,m:0,c:[0,0,0]},streak:0,streakDay:'',map:'tokyo',gems:0,plusUntil:0,plusMaps:[],claimed:[],chests:0,chestProg:0,trail:'sakura',trails:['sakura'],emotes:['wave'],maps:[],boost:0,goal:6000,hist:{},ach:[],pets:0,manekis:0,sfx:true};let LIVE=null;const fadeCv=document.createElement('canvas');let fadeA=0;
 try{const d=JSON.parse(localStorage.getItem('sanpo_v1'));if(d)Object.assign(S,d)}catch(e){}
 function save(){try{localStorage.setItem('sanpo_v1',JSON.stringify(S))}catch(e){}}
 S.cards=Math.max(S.cards,Math.min(CITIES.length,Math.floor(S.total/1e4)));
@@ -782,7 +810,7 @@ function render(){const P=PAL[S.weather];
  puffs.forEach(p=>{X.fillStyle=`rgba(255,255,255,${p.l*.8})`;X.beginPath();X.arc(p.x,p.y,4+(1-p.l)*6,0,7);X.arc(p.x+6,p.y-2,3+(1-p.l)*5,0,7);X.fill()});
  bowls.forEach(b=>{if(b.d>0)return;const t=b.t,x=W*.2+(catX+18*K-W*.2)*t,y=GY-60+(CGY-78*K-GY+60)*t-Math.sin(t*Math.PI)*70;X.globalAlpha=1-Math.max(0,t-.8)*5;bowl(x,y);X.globalAlpha=1});
  sparks.forEach(p=>flower(p.x,p.y,p.l,1.3));fxDraw();
- if(!WORLD||!['osaka','kamakura'].includes(S.map))branch();drawWeather();
+ if(!WORLD||!['osaka','kamakura'].includes(mapBase()))branch();drawWeather();
  X.globalAlpha=.2;X.fillStyle=grain;X.fillRect(0,0,W,H);X.globalAlpha=1;
  drawDrops();if(fadeA>0){X.save();X.setTransform(1,0,0,1,0,0);X.globalAlpha=fadeA;X.drawImage(fadeCv,0,0);X.restore()}}
 let last=performance.now();
@@ -802,7 +830,7 @@ function updHUD(){const ls=$('#ls');if(!ls.children.length)for(let i=0;i<10;i++)
  if(blueHour())ch.push('<span class="chip blue">Heure bleue · Maneki-neko</span>');if(S.weight>=70)ch.push('<span class="chip warn">Il bloque la ruelle — marche !</span>');
  $('#chips').innerHTML=ch.join('');
  document.querySelectorAll('#wx button').forEach(b=>b.setAttribute('aria-pressed',S.auto?b.dataset.w==='auto':b.dataset.w===S.weather));
- $('#b-blue').classList.toggle('on',S.blue);{const l=lvl(S.total),a=800*(l-1)**2,b=800*l**2;$('#who').textContent=S.name;$('#lvl').textContent='Niveau '+l;$('#xpf').style.width=Math.min(100,(S.total-a)/(b-a)*100)+'%'}$('#mdot').hidden=!claimable();{const n=rewCount();const bd=$('#rbadge');if(bd){bd.hidden=!n;bd.textContent=n}}updToday();checkAch()}
+ $('#b-blue').classList.toggle('on',S.blue);{const l=lvl(S.total),a=800*(l-1)**2,b=800*l**2;$('#who').textContent=S.name;$('#lvl').textContent='Niveau '+l;$('#xpf').style.width=Math.min(100,(S.total-a)/(b-a)*100)+'%'}$('#mdot').hidden=!claimable();{const g=$('#gem');if(g)g.textContent=(S.gems||0).toLocaleString('fr-FR');document.body.classList.toggle('isplus',plusOn())}{const n=rewCount();const bd=$('#rbadge');if(bd){bd.hidden=!n;bd.textContent=n}}updToday();checkAch()}
 function addSteps(n){if(go!=null)return;const wasMochi=S.weight>=70,old=S.total;checkDay();S.dly.w+=n;addToday(n);
  S.steps+=n;S.total+=n;{const gn=Math.round(n/10*[1,.7,.4][stage(S.weight)]*mult());progressHooks(n);S.coins+=gn;pops.push({x:catX,y:CGY-125*K,t:'+'+gn+' ◎',l:1});ensureAC();coinSfx()}S.weight=Math.max(0,S.weight-11);
  const c=Math.min(CITIES.length,Math.floor(S.total/1e4));if(c>S.cards){S.cards=c;setTimeout(()=>queueModal(()=>unlock(c-1)),900)}
@@ -943,7 +971,7 @@ async function startPedo(){if(pedo||pedoTry>1)return;pedoTry++;
  feed=makePedo(n=>realStep(n),{min:SENS[S.sens||'mid']});sess=0;pedo=true;gotMotion=false;addEventListener('devicemotion',onMotion);grabWake();updHUD();
  setTimeout(()=>{if(pedo&&!gotMotion){pedo=false;removeEventListener('devicemotion',onMotion);updHUD()}else if(pedo)toast('Podomètre actif : marche, ton chat avance avec toi.')},3000)}
 document.addEventListener('pointerdown',()=>{if(!pedo&&splash.hidden)startPedo()},{passive:true});
-setInterval(()=>{if(pedo)updHUD();const q=feed&&feed.st,d=$('#pdiag');if(d)d.textContent=pedo?`SANPO v2.0 · capteur ${gotMotion?Math.round(q?q.hz:0)+' Hz':'muet'} · signal ${q?q.env.toFixed(2):'–'} · seuil ${q?q.thr.toFixed(2):'–'} · ${q&&q.walking?'marche détectée':'recherche ('+(q?q.run:0)+'/5)'}`:'SANPO v2.0 · podomètre inactif'},500);
+setInterval(()=>{if(pedo)updHUD();const q=feed&&feed.st,d=$('#pdiag');if(d)d.textContent=pedo?`SANPO v2.1 · capteur ${gotMotion?Math.round(q?q.hz:0)+' Hz':'muet'} · signal ${q?q.env.toFixed(2):'–'} · seuil ${q?q.thr.toFixed(2):'–'} · ${q&&q.walking?'marche détectée':'recherche ('+(q?q.run:0)+'/5)'}`:'SANPO v2.1 · podomètre inactif'},500);
 /* ============ FX KAWAII : cœurs, gains, confettis, sons ============ */
 let sfx=null;
 function ensureAC(){try{if(!AC)initAudio();if(AC.state==='suspended')AC.resume()}catch(e){}}
@@ -975,12 +1003,12 @@ function fxDraw(){hearts.forEach(h=>{X.globalAlpha=Math.min(1,h.l*1.6);heart(h.x
 C.addEventListener('click',e=>{const r=C.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(Math.abs(x-catX)<42*K&&y>CGY-120*K&&y<CGY+10)petCat()});
 document.addEventListener('click',e=>{if(e.target.closest('button')&&AC)popSfx()},true);
 const splash=$('#splash');
-function startGame(music){startPedo();ensureAC();{const v=$('#cat-name').value.trim();if(v)S.name=v;save();updHUD()}splash.classList.add('out');setTimeout(()=>splash.hidden=true,550);if(music&&!musicOn)toggleMusic();setTimeout(petCat,450);setTimeout(()=>S.tuto?omikuji():tutorial(0),900)}
+function startGame(music){startPedo();dailyPlus();ensureAC();{const v=$('#cat-name').value.trim();if(v)S.name=v;save();updHUD()}splash.classList.add('out');setTimeout(()=>splash.hidden=true,550);if(music&&!musicOn)toggleMusic();setTimeout(petCat,450);setTimeout(()=>S.tuto?omikuji():tutorial(0),900)}
 $('#b-start').onclick=()=>startGame(true);$('#b-start2').onclick=()=>startGame(false);
 
 /* ============ PROGRESSION : niveaux, missions du jour, série, garde-robe ============ */
 const lvl=t=>1+Math.floor(Math.sqrt(t/800));
-const FURS=[{id:'blanc',n:'Blanc',c:'#f4ede3',p:0},{id:'creme',n:'Crème',c:'#f6dcb8',p:200},{id:'roux',n:'Roux tigré',c:'#f5b56b',p:400},{id:'gris',n:'Gris bleu',c:'#b4bcd2',p:400},{id:'noir',n:'Noir',c:'#4a4058',p:600},{id:'calico',n:'Calico',c:'#f4ede3',p:800},{id:'sakura',n:'Sakura',c:'#ffc6d9',p:-1},{id:'galaxie',n:'Galaxie',c:'#4b4fa3',p:-1},{id:'or',n:'Or',c:'#f2c94c',p:-1}];
+const FURS=[{id:'blanc',n:'Blanc',c:'#f4ede3',p:0},{id:'creme',n:'Crème',c:'#f6dcb8',p:200},{id:'roux',n:'Roux tigré',c:'#f5b56b',p:400},{id:'gris',n:'Gris bleu',c:'#b4bcd2',p:400},{id:'noir',n:'Noir',c:'#4a4058',p:600},{id:'calico',n:'Calico',c:'#f4ede3',p:800},{id:'sakura',n:'Sakura',c:'#ffc6d9',p:-1},{id:'galaxie',n:'Galaxie',c:'#4b4fa3',p:-1},{id:'or',n:'Or',c:'#f2c94c',p:-1},{id:'kitsune',n:'Kitsune',c:'#ff9a4a',p:-2,g:250},{id:'matcha',n:'Matcha',c:'#a8d68f',p:-2,g:250},{id:'bubble',n:'Bubblegum',c:'#ff9ec7',p:-2,g:250},{id:'minuit',n:'Minuit',c:'#35305f',p:-2,g:450},{id:'neige',n:'Flocon',c:'#e6f2ff',p:-2,g:450}];
 const ACCS=[{id:'',n:'Aucun',k:'無',c:'#cfc6d8',p:0},{id:'ruban',n:'Ruban',k:'結',c:'#ff6f91',p:300},{id:'fleur',n:'Fleur',k:'花',c:'#ffa8c0',p:300},{id:'bandeau',n:'Bandeau',k:'忍',c:'#e64b5a',p:500},{id:'etoile',n:'Étoile',k:'星',c:'#ffc93c',p:600},{id:'couronne',n:'Couronne',k:'冠',c:'#f2b631',p:1200}];
 const MIS=[{k:'w',goal:1000,t:'Marcher 1 000 pas',r:100,ic:'足',col:'#ff6f91'},{k:'p',goal:3,t:'Caresser ton chat 3 fois',r:60,ic:'撫',col:'#9d84f0'},{k:'m',goal:1,t:'Attraper un Maneki-neko',r:150,ic:'招',col:'#ffb04d'}];
 function applyFur(){FUR=(FURS.find(f=>f.id===S.fur)||FURS[0]).c}applyFur();
@@ -1008,13 +1036,13 @@ function renderPreview(){const pc=document.getElementById('pv');if(!pc||modal.hi
  px.fillStyle='rgba(157,132,240,.25)';px.beginPath();px.ellipse(85,134,52,9,0,0,7);px.fill();
  const sv=[X,catX,CGY,K];X=px;catX=85;CGY=134;K=1.15;PREVIEW=true;try{drawCatAny(Math.min(S.weight,29),0,1)}finally{X=sv[0];catX=sv[1];CGY=sv[2];K=sv[3];PREVIEW=false}}
 let curModal='';
-function shop(tab='items'){curModal='shop:'+tab;const tabs=`<div class="tabs"><button data-tab="items" aria-pressed="${tab==='items'}">Objets</button><button data-tab="wear" aria-pressed="${tab==='wear'}">Garde-robe</button></div>`;
+function shop(tab='items'){curModal='shop:'+tab;const tabs=`${plusBanner()}<div class="tabs t3"><button data-tab="items" aria-pressed="${tab==='items'}">Objets</button><button data-tab="wear" aria-pressed="${tab==='wear'}">Garde-robe</button><button data-tab="gems" aria-pressed="${tab==='gems'}">Premium</button></div>`;if(tab==='gems'){openModal(`<h2>Boutique premium</h2><p class="sub">Tu as ${S.gems||0} gemmes · ${S.coins.toLocaleString('fr-FR')} pas-coins</p>${tabs}${gemShopHTML()}`);return}
  if(tab==='items'){openModal(`<h2>Boutique du coin</h2><p class="sub">Tu as ${S.coins.toLocaleString('fr-FR')} pas-coins ◎</p>${tabs}
  <div class="item"><span class="ic" style="background:#6f9a6a">茶</span><div><h3>Thé vert détox</h3><p>Gèle le poids du chat pendant 24 h, pour les jours sans marche.</p></div><button class="btn" data-buy="tea" ${S.coins<300?'disabled':''}>300 ◎</button></div>
  <div class="item"><span class="ic" style="background:#ffb236">運</span><div><h3>Onigiri porte-bonheur</h3><p>Pas-coins doublés pendant tes 1 000 prochains pas.${S.boost>0?` Actif : ${S.boost} pas restants.`:""}</p></div><button class="btn" data-buy="boost" ${S.coins<400?"disabled":""}>400 ◎</button></div>
  <div class="item"><span class="ic" style="background:var(--hanko)">保</span><div><h3>Assurance seconde chance</h3><p>Évite le Game Over une fois, in extremis. Possédées : ${S.ins}</p></div><button class="btn" data-buy="ins" ${S.coins<800?'disabled':''}>800 ◎</button></div>`);return}
  const sw=(t,o,c,k)=>{const id=t+':'+o.id,own=o.p===0||S.owned.includes(id),eq=(t==='fur'?S.fur:S.acc)===o.id,rw=TRACK.find(r=>r.t===t&&r.v===o.id);
-  return `<button class="sw ${eq?'eq':''} ${own?'':'lock'}" data-wear="${id}"><i style="background:${c}">${k||''}</i>${o.n}<em>${eq?'Porté':own?'Mettre':o.p<0?'🔒 '+(rw.s/1000)+'k pas':o.p+' ◎'}</em></button>`};
+  return `<button class="sw ${eq?'eq':''} ${own?'':'lock'}" data-wear="${id}"><i style="background:${c}">${k||''}</i>${o.n}<em>${eq?'Porté':own?'Mettre':o.p===-2?'◆ '+o.g:o.p<0?'🔒 '+(rw.s/1000)+'k pas':o.p+' ◎'}</em></button>`};
  openModal(`<h2>Garde-robe de ${S.name}</h2><p class="sub">Tu as ${S.coins.toLocaleString('fr-FR')} pas-coins ◎</p>${tabs}<canvas id="pv" class="pv" aria-label="Aperçu du chat"></canvas>
  <h3 class="sec">Pelage</h3><div class="wgrid">${FURS.map(f=>sw('fur',f,f.id==='calico'?'conic-gradient(#f2a25a 0 33%,#4a4058 0 60%,#f4ede3 0)':f.c)).join('')}</div>
  <h3 class="sec">Accessoires</h3><div class="wgrid">${ACCS.map(a=>sw('acc',a,a.c,a.k)).join('')}</div>
@@ -1025,7 +1053,7 @@ function rerender(){if(curModal.startsWith('shop'))shop(curModal.split(':')[1]);
 $('#mbody').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(t){shop(t.dataset.tab);return}
  const bu=e.target.closest('[data-buy]');if(bu){if(bu.dataset.buy==='tea'&&S.coins>=300){S.coins-=300;S.tea=S.sim+DAY;toast('Thé détox infusé · poids gelé 24 h')}if(bu.dataset.buy==='boost'&&S.coins>=400){S.coins-=400;S.boost=(S.boost||0)+1000;toast('Onigiri mangé : pas-coins ×2 pendant 1 000 pas !')}if(bu.dataset.buy==='ins'&&S.coins>=800){S.coins-=800;S.ins++;toast('Assurance ajoutée')}coinSfx();save();updHUD();shop('items');return}
  const w=e.target.closest('[data-wear]');if(w){const id=w.dataset.wear,[ty,o]=id.split(':'),it=(ty==='fur'?FURS:ACCS).find(x=>x.id===o);
-  if(it.p<0&&!S.owned.includes(id)){toast(`Récompense exclusive à ${TRACK.find(r=>r.v===it.id).s.toLocaleString('fr-FR')} pas`);return}if(!(it.p===0||S.owned.includes(id))){if(S.coins<it.p){toast(`Il te manque ${(it.p-S.coins).toLocaleString('fr-FR')} ◎ · marche encore un peu !`);return}S.coins-=it.p;S.owned.push(id);celebrate()}
+  if(it.p===-2&&!S.owned.includes(id)){buyGem(it.g,`Pelage ${it.n}`,()=>{S.owned.push(id);S.fur=it.id;applyFur();catJump=0;happyT=1;save();updHUD();shop('wear')});return}if(it.p<0&&!S.owned.includes(id)){toast(`Récompense exclusive à ${TRACK.find(r=>r.v===it.id).s.toLocaleString('fr-FR')} pas`);return}if(!(it.p===0||S.owned.includes(id))){if(S.coins<it.p){toast(`Il te manque ${(it.p-S.coins).toLocaleString('fr-FR')} ◎ · marche encore un peu !`);return}S.coins-=it.p;S.owned.push(id);celebrate()}
   if(ty==='fur'){S.fur=o;applyFur()}else S.acc=o;catJump=0;happyT=1;meow();save();updHUD();rerender();return}
  const c=e.target.closest('[data-claim]');if(c){const i=+c.dataset.claim,m=MIS[i];if(S.dly[m.k]<m.goal||S.dly.c[i])return;S.dly.c[i]=1;S.coins+=m.r;coinSfx();
   if(S.streakDay!==S.dayKey){S.streak=S.streakDay===new Date(S.sim-DAY).toDateString()?S.streak+1:1;S.streakDay=S.dayKey;celebrate();toast(`Série de ${S.streak} jour${S.streak>1?'s':''} ! Continue demain.`)}
@@ -1402,16 +1430,16 @@ function initWorld(){if(!window.THREE||!CAT3)return;try{
   const pines=strip([()=>{const g=new T3.Group(),t=at(sized(CYL,trunkM,6,120,6),0,58,0);t.rotation.z=.25;g.add(t);[[-12,118,0,40],[10,100,12,32],[-30,96,-8,28]].forEach(([x,y,z,r],k)=>g.add(at(sized(SPH,k%2?pine2:pine,r,r*.38,r),x,y,z)));return g}],520,-470);
   return{update(cx){huts.place(cx);par.place(cx);pines.place(cx);sea.position.x=foam.position.x=cx;st.t.offset.x=cx/256+T*.01;st.t.offset.y=T*.015;foam.position.z=-438+Math.sin(T*1.2)*8;fo.t.offset.x=cx/256},
    hide(){[huts,par,pines].forEach(s=>s.hide());sea.visible=foam.visible=false},show(){sea.visible=foam.visible=true},
-   wx(w){seaM.color.set(w==='night'?'#6a74b0':w==='rain'?'#9aa8bf':'#ffffff')}}}
- const BUILD={kyoto:buildKyoto,osaka:buildOsaka,nara:buildNara,kamakura:buildKama},TH={};let curMap='';
+   wx(w){seaM.color.set(S.map==='okinawa'?(w==='night'?'#3f8f9a':'#6ff5df'):w==='night'?'#6a74b0':w==='rain'?'#9aa8bf':'#ffffff')}}}
+ let curAlias='';const BUILD={kyoto:buildKyoto,osaka:buildOsaka,nara:buildNara,kamakura:buildKama},TH={};let curMap='';
  function applyMap(mp){Object.values(TH).forEach(t=>t.hide());if(mp!=='tokyo'){if(!TH[mp])TH[mp]=BUILD[mp]();TH[mp].show&&TH[mp].show();TH[mp].wx&&TH[mp].wx(S.weather)}
   curb.visible=mp==='tokyo'||mp==='osaka';curb.scale.z=mp==='osaka'?120/46:1;curb.position.z=mp==='osaka'?ZB+60:ZB+23;
   ground.position.z=mp==='kamakura'?-440+650:mp==='osaka'?ZB+352+650:ZB+650;path.visible=['kyoto','nara','kamakura'].includes(mp);paintPath(mp,S.weather);paintGround(mp,PAL[S.weather],S.weather)}
  function paintGround(mp,P,wx){if(mp==='tokyo'||mp==='osaka'){paintRoad(mp==='osaka'?Object.assign({},P,{road:wx==='snow'?P.road:'#5d5870'}):P,wx);return}
-  const x=road.x,base=mp==='kyoto'?'#d8ccb6':mp==='nara'?'#86b865':'#ecd7a8';x.fillStyle=wx==='snow'?'#eef1f8':base;x.fillRect(0,0,512,256);
+  const x=road.x,base=mp==='kyoto'?'#d8ccb6':mp==='nara'?'#86b865':S.map==='okinawa'?'#fbf3df':'#ecd7a8';x.fillStyle=wx==='snow'?'#eef1f8':base;x.fillRect(0,0,512,256);
   for(let k=0;k<1400;k++){x.fillStyle=mp==='nara'?`rgba(${k%2?'60,110,50':'170,220,120'},.35)`:`rgba(${k%2?'255,255,255':'120,90,60'},.12)`;const a=hash(k+3)*512,b=hash(k*5+1)*256;mp==='nara'?x.fillRect(a,b,1.5,5):x.fillRect(a,b,2.5,2.5)}
   if(wx==='rain'){x.fillStyle='rgba(40,50,80,.25)';x.fillRect(0,0,512,256)}road.t.needsUpdate=true}
- WORLD={render(){const mp=S.map||'tokyo';if(lastWx!==S.weather||curMap!==mp){curMap=mp;applyMap(mp);setWx(S.weather)}
+ WORLD={render(){const mp0=S.map||'tokyo',mp=(MAPS.find(m=>m.id===mp0)||{}).base||mp0;if(lastWx!==S.weather||curMap!==mp||curAlias!==mp0){curMap=mp;curAlias=mp0;applyMap(mp);setWx(S.weather)}
    const k=W+'x'+H;if(k!==sz){sz=k;rd.setPixelRatio(Math.min(1.75,devicePixelRatio||1));rd.setSize(W,H,false)}
    CWX=scroll;layout();{const h=new T3.Vector3(CWX,0,-2030).project(cam);HY=(1-h.y)/2*H}
    const litL=[];
@@ -1477,7 +1505,7 @@ function statsHTML(){S.hist=S.hist||{};const days=[...Array(7)].map((_,k)=>{cons
 function achHTML(){S.ach=S.ach||[];return `<p class="sub">${S.ach.length} / ${ACH.length} succès · +100 ◎ chacun</p>`+ACH.map(a=>{const on=S.ach.includes(a.id),v=Math.min(a.g,a.v());
  return `<div class="ach ${on?'':'off'}"><span class="md" style="background:${a.c}">${a.k}</span><div><h3>${a.t}</h3><p>${a.d}</p>${on?'':`<div class="pbar"><i style="width:${v/a.g*100}%"></i></div>`}</div><em>${on?'Obtenu':v.toLocaleString('fr-FR')+' / '+a.g.toLocaleString('fr-FR')}</em></div>`}).join('')}
 function journal(tab='stats'){curModal='jour:'+tab;openModal(`<h2>Journal de ${S.name}</h2><div class="tabs t3" style="margin-top:10px"><button data-jtab="stats" aria-pressed="${tab==='stats'}">Stats</button><button data-jtab="cards" aria-pressed="${tab==='cards'}">Cartes</button><button data-jtab="ach" aria-pressed="${tab==='ach'}">Succès</button></div>${tab==='stats'?statsHTML():tab==='cards'?cardsHTML():achHTML()}`)}
-const _rer=rerender;rerender=function(){if(curModal==='rew')return rewards();if(curModal.startsWith('jour'))journal(curModal.split(':')[1]);else _rer()};
+const _rer=rerender;rerender=function(){if(curModal==='rew')return rewards();if(curModal==='plus')return plusSheet();if(curModal.startsWith('jour'))journal(curModal.split(':')[1]);else _rer()};
 $('#mbody').addEventListener('click',e=>{const j=e.target.closest('[data-jtab]');if(j)journal(j.dataset.jtab)});
 $('#b-book').onclick=()=>journal('stats');$('#today').onclick=()=>journal('stats');
 /* omikuji : cadeau quotidien */
@@ -1529,7 +1557,10 @@ const MAPS=[
  {id:'kyoto',n:'Kyoto',k:'京都',d:'Tunnel de torii vermillon, pagode et érables',g:['#ff8a5c','#c8433a']},
  {id:'osaka',n:'Osaka',k:'大阪',d:'Canal de Dōtonbori et néons géants',g:['#4fe3ff','#7a3cff']},
  {id:'nara',n:'Nara',k:'奈良',d:'Parc fleuri, lanternes de pierre et biches',g:['#9be58a','#2fa77a']},
- {id:'kamakura',n:'Kamakura',k:'鎌倉',d:'Plage, vagues et cabanes au bord de la mer',g:['#7fd4ff','#2f7fd0']}];
+ {id:'kamakura',n:'Kamakura',k:'鎌倉',d:'Plage, vagues et cabanes au bord de la mer',g:['#7fd4ff','#2f7fd0']},
+ {id:'hokkaido',n:'Hokkaidō',k:'北海道',d:'Forêt sous la neige, lanternes et biches. Carte premium',g:['#cfe6ff','#6f8fd8'],base:'nara',wx:'snow',gem:400},
+ {id:'okinawa',n:'Okinawa',k:'沖縄',d:'Lagon turquoise et sable blanc. Carte premium',g:['#7ff0e0','#1fb3a8'],base:'kamakura',wx:'sun',gem:400}];
+const mapBase=()=>(MAPS.find(m=>m.id===S.map)||{}).base||S.map||'tokyo';
 function hills(col,sp,base,amp,f){X.fillStyle=col;X.beginPath();X.moveTo(0,H);for(let x=0;x<=W+10;x+=10){const u=x+scroll*sp;X.lineTo(x,base-amp*(.55+.45*Math.sin(u*.009*f))-amp*.35*Math.sin(u*.021*f+1.3))}X.lineTo(W,H);X.closePath();X.fill()}
 function skyline(P){const night=S.weather==='night'||S.weather==='rain';[[.1,'#1a1630',.55,260],[.2,'#1a1630',.35,180]].forEach(([sp,c,t,mh],L)=>{const col=mix(P.fuji,c,t),sl=30+L*8,off=scroll*sp;
  for(let i=Math.floor(off/sl)-1;i<Math.floor(off/sl)+W/sl+2;i++){const x=i*sl-off,h=60+hash(i+L*50)*mh;X.fillStyle=col;X.fillRect(x,GY-h,sl-4,h+10);
@@ -1537,16 +1568,16 @@ function skyline(P){const night=S.weather==='night'||S.weather==='rain';[[.1,'#1
 function island(P){const y=HY||GY-60,c=mix(P.fuji,'#2f5a46',.55);
  X.fillStyle=mix(P.fuji,'#ffffff',.15);X.beginPath();X.moveTo(W*.55,y);X.lineTo(W*.72,y-62);X.lineTo(W*.77,y-62);X.lineTo(W*.95,y);X.fill();X.fillStyle=P.cap;X.beginPath();X.moveTo(W*.7,y-50);X.lineTo(W*.72,y-62);X.lineTo(W*.77,y-62);X.lineTo(W*.79,y-50);X.fill();
  X.fillStyle=c;X.beginPath();X.moveTo(W*.08,y);X.bezierCurveTo(W*.14,y-46,W*.34,y-50,W*.42,y);X.fill();X.fillRect(W*.26,y-62,2.5,16);X.fillRect(W*.25,y-62,5,4)}
-function backdrop(P){const mp=WORLD?S.map:'tokyo';
+function backdrop(P){const mp=WORLD?mapBase():'tokyo';
  if(mp==='tokyo'){fuji(P);kumo();farCity(P);return}kumo();
  if(mp==='kyoto'){hills(mix(P.fuji,'#4f6f8a',.35),.05,GY-120,70,1);hills(mix(P.fuji,'#3b5a52',.5),.1,GY-60,50,1.4)}
  if(mp==='nara'){hills(mix(P.fuji,'#6f9a6a',.45),.05,GY-120,70,.8);hills(mix(P.fuji,'#3f6b45',.55),.1,GY-55,55,1.3)}
  if(mp==='osaka')skyline(P);
  if(mp==='kamakura')island(P)}
 function mapTitle(m){const t=$('#maptitle');t.querySelector('b').textContent=m.k;t.querySelector('span').textContent=m.n;t.hidden=false;t.classList.remove('go');void t.offsetWidth;t.classList.add('go');clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
-function mapPicker(){curModal='';openModal(`<h2>Choisir une balade</h2><p class="sub">Marche pour débloquer de nouvelles villes. Ta progression te suit partout.</p><div class="maps">${MAPS.map(m=>`<button class="mapc ${S.map===m.id?'cur':''} ${mapOpen(m.id)?'':'locked'}" data-map="${m.id}" style="--g1:${m.g[0]};--g2:${m.g[1]}"><b>${m.k}</b><span><strong>${m.n}</strong><small>${m.d}</small></span>${S.map===m.id?'<em>Ici</em>':mapOpen(m.id)?'':`<em class="lk">🔒 ${(mapNeed(m.id)/1000)}k pas</em>`}</button>`).join('')}</div>`)}
+function mapPicker(){curModal='';openModal(`<h2>Choisir une balade</h2><p class="sub">Marche pour débloquer de nouvelles villes. Ta progression te suit partout.</p><div class="maps">${MAPS.map(m=>`<button class="mapc ${S.map===m.id?'cur':''} ${mapOpen(m.id)?'':'locked'}" data-map="${m.id}" style="--g1:${m.g[0]};--g2:${m.g[1]}"><b>${m.k}</b><span><strong>${m.n}</strong><small>${m.d}</small></span>${S.map===m.id?'<em>Ici</em>':mapOpen(m.id)?'':m.gem?`<em class="lk">◆ ${m.gem}</em>`:`<em class="lk">🔒 ${(mapNeed(m.id)/1000)}k pas</em>`}</button>`).join('')}</div>`)}
 $('#b-map').onclick=mapPicker;
-$('#mbody').addEventListener('click',e=>{const b=e.target.closest('[data-map]');if(!b)return;const m=MAPS.find(x=>x.id===b.dataset.map);if(!mapOpen(m.id)){toast(`${m.n} se débloque à ${mapNeed(m.id).toLocaleString('fr-FR')} pas`);return}modal.hidden=true;if(S.map!==m.id){snapFade();S.map=m.id;save();setTimeout(()=>mapTitle(m),120)}});
+$('#mbody').addEventListener('click',e=>{const b=e.target.closest('[data-map]');if(!b)return;const m=MAPS.find(x=>x.id===b.dataset.map);if(!mapOpen(m.id)){if(m.gem){shop('gems');toast(`${m.n} : carte premium (${m.gem} gemmes ou SANPO+)`);return}toast(`${m.n} se débloque à ${mapNeed(m.id).toLocaleString('fr-FR')} pas · ou avec SANPO+`);return}modal.hidden=true;if(m.wx){S.auto=false;setWeather(m.wx)}if(S.map!==m.id){snapFade();S.map=m.id;save();setTimeout(()=>mapTitle(m),120)}});
 ICONS.map=`<g ${LA}><path d="M5 8.5l7-3 8 3 7-3v18l-7 3-8-3-7 3z"/><path d="M12 5.5v18M20 8.5v18"/></g>`;
 document.querySelectorAll('[data-ic="map"]').forEach(e=>e.innerHTML=`<svg viewBox="0 0 32 32" aria-hidden="true">${ICONS.map}</svg>`);
 
@@ -1564,8 +1595,8 @@ const TRACK=[
  {s:40000,t:'chest',v:3,l:'3 coffres surprise'},{s:45000,t:'emote',v:'dance',l:'Danse de la joie'},{s:50000,t:'map',v:'kamakura',l:'Carte Kamakura'},{s:60000,t:'acc',v:'couronne',l:'Couronne royale'},
  {s:70000,t:'trail',v:'arcenciel',l:'Traces arc-en-ciel'},{s:80000,t:'fur',v:'galaxie',l:'Pelage Galaxie (exclusif)'},{s:90000,t:'chest',v:5,l:'5 coffres surprise'},{s:100000,t:'fur',v:'or',l:'Chat en or (légendaire)'}];
 const TRAILS={sakura:'Sakura',etoiles:'Étoiles',coeurs:'Cœurs',notes:'Notes',arcenciel:'Arc-en-ciel'};
-const mapOpen=id=>id==='tokyo'||(S.maps||[]).includes(id),mapNeed=id=>(TRACK.find(r=>r.t==='map'&&r.v===id)||{s:0}).s;
-const mult=()=>(1+Math.min(S.streak||0,10)*.05)*((S.boost||0)>0?2:1);
+const mapOpen=id=>id==='tokyo'||(S.maps||[]).includes(id)||plusOn(),mapNeed=id=>(TRACK.find(r=>r.t==='map'&&r.v===id)||{s:0}).s;
+const mult=()=>(1+Math.min(S.streak||0,10)*.05)*((S.boost||0)>0?2:1)*(plusOn()?2:1);
 const rewCount=()=>TRACK.filter((r,i)=>S.total>=r.s&&!S.claimed.includes(i)).length+(S.chests||0);
 function progressHooks(n){S.chestProg=(S.chestProg||0)+n;while(S.chestProg>=2000){S.chestProg-=2000;S.chests=(S.chests||0)+1;setTimeout(()=>{toast('Coffre surprise gagné ! Ouvre-le dans Récompenses');blip(880,1320,.18,'triangle',.12)},300)}
  if(S.boost>0)S.boost=Math.max(0,S.boost-n);
@@ -1620,6 +1651,58 @@ function drawLucky(){for(const L of lucky){const x=L.wx-scroll,y=CGY-26*K+Math.s
  X.fillStyle='#ffc83d';X.strokeStyle='#b37a00';X.lineWidth=2;X.beginPath();X.arc(0,0,9*K,0,7);X.fill();X.stroke();X.fillStyle='#fff3c4';X.beginPath();X.arc(-2.5*K,-2.5*K,2.6*K,0,7);X.fill();X.restore()}}
 ICONS.gift=`<g ${LA}><rect x="5" y="12" width="22" height="15" rx="3" fill="#ffd3e1" stroke="#ff4f8b"/><path d="M4 9.5h24v4H4zM16 9.5v17.5" stroke="#ff4f8b"/><path d="M16 9.5c-2-4.5-7-5-7-1.5s7 1.5 7 1.5zM16 9.5c2-4.5 7-5 7-1.5s-7 1.5-7 1.5z" stroke="#ff4f8b"/></g>`;
 document.querySelectorAll('[data-ic="gift"]').forEach(e=>e.innerHTML=`<svg viewBox="0 0 32 32" aria-hidden="true">${ICONS.gift}</svg>`);
+
+/* ============ MONÉTISATION : gemmes, SANPO+, offres (paiement simulé en démo) ============ */
+const plusOn=()=>(S.plusUntil||0)>Date.now();
+const GEMPACKS=[{g:100,p:'0,99 €'},{g:550,p:'4,99 €',tag:'+10 %'},{g:1200,p:'9,99 €',tag:'Populaire'},{g:2600,p:'19,99 €',tag:'Meilleure offre'}];
+function plusBanner(){return plusOn()?`<button class="plusban on" data-plus><b>SANPO+</b><span>Actif jusqu’au ${new Date(S.plusUntil).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} · gains ×2, toutes les cartes</span></button>`
+ :`<button class="plusban" data-plus><b>SANPO+</b><span>Gains ×2, toutes les cartes, coffre premium chaque jour · 7 jours offerts</span><em>Essayer</em></button>`}
+function starterLeft(){if(!S.starterAt){S.starterAt=Date.now();save()}return S.starterAt+48*3600e3-Date.now()}
+function gemShopHTML(){const left=starterLeft(),h=Math.floor(left/3600e3),m=Math.floor(left%3600e3/60e3);
+ const st=!S.starter&&left>0?`<div class="offer"><div><span class="otag">Offre de bienvenue · encore ${h} h ${String(m).padStart(2,'0')}</span><b>Pack Kitsune</b><small>500 gemmes + pelage Kitsune + carte Kyoto</small></div><button class="btn primary" data-pay="starter">2,99 €<s>9,99 €</s></button></div>`:'';
+ const maps=MAPS.filter(m=>m.gem||m.id!=='tokyo').filter(m=>!mapOpen(m.id)).map(m=>`<div class="item"><span class="ic" style="background:linear-gradient(135deg,${m.g[0]},${m.g[1]})">${m.k}</span><div><h3>Carte ${m.n}</h3><p>${m.gem?'Exclusivité premium':'Débloque-la tout de suite au lieu d’attendre '+(mapNeed(m.id)/1000)+'k pas'}</p></div><button class="btn" data-gbuy="map:${m.id}">◆ ${m.gem||Math.round(mapNeed(m.id)/40)}</button></div>`).join('');
+ const furs=FURS.filter(f=>f.p===-2&&!S.owned.includes('fur:'+f.id)).map(f=>`<div class="item"><span class="ic" style="background:${f.c}">猫</span><div><h3>Pelage ${f.n}</h3><p>Exclusif boutique premium</p></div><button class="btn" data-gbuy="fur:${f.id}">◆ ${f.g}</button></div>`).join('');
+ return `${st}<h3 class="sec">Gemmes</h3><div class="gemgrid">${GEMPACKS.map((k,i)=>`<button class="gempack" data-pay="gems:${i}">${k.tag?`<i>${k.tag}</i>`:''}<span class="ic">${svgI('gem')}</span><b>${k.g.toLocaleString('fr-FR')}</b><em>${k.p}</em></button>`).join('')}</div>
+ <h3 class="sec">Cartes du Japon</h3>${maps||'<p class="sub">Toutes les cartes sont débloquées.</p>'}
+ <h3 class="sec">Pelages premium</h3>${furs||'<p class="sub">Tu as tous les pelages premium.</p>'}
+ <h3 class="sec">Raccourcis</h3>
+ <div class="item"><span class="ic" style="background:#b06bff">箱</span><div><h3>5 coffres surprise</h3><p>Ouvre-les dans Récompenses</p></div><button class="btn" data-gbuy="chest5">◆ 200</button></div>
+ <div class="item"><span class="ic" style="background:#ffc83d">◎</span><div><h3>1 000 pas-coins</h3><p>Pour la garde-robe et les objets</p></div><button class="btn" data-gbuy="coins">◆ 100</button></div>
+ <p class="demo">Mode démo : aucun paiement réel n’est effectué. Les achats sont simulés pour tester l’expérience.</p>`}
+function svgI(k){return `<svg viewBox="0 0 32 32" aria-hidden="true">${ICONS[k]}</svg>`}
+function buyGem(cost,label,done){if((S.gems||0)<cost){toast(`Il te manque ${cost-(S.gems||0)} gemmes`);shop('gems');return}S.gems-=cost;coinSfx();done();celebrate();toast(`${label} débloqué !`)}
+/* faux paiement : écran de confirmation type Apple Pay / Google Pay */
+function demoPay(label,price,done){const back=curModal;curModal='pay';openModal(`<div class="pay"><p class="sub">Confirmer l’achat</p><h2>${label}</h2><div class="price">${price}</div>
+ <button class="paybtn" data-payok>Payer · Apple Pay / Google Pay</button><button class="btn wide" data-payko>Annuler</button><p class="demo">Mode démo : aucun paiement réel. Brancher Stripe, l’App Store ou Google Play pour encaisser.</p></div>`);
+ PAYCB=()=>{const b=document.querySelector('[data-payok]');b.classList.add('busy');b.textContent='Traitement…';setTimeout(()=>{done();save();updHUD();fanfare();celebrate();
+  openModal(`<div class="pay ok"><div class="check">✓</div><h2>Merci !</h2><p class="sub">${label} est à toi.</p><button class="btn primary wide" data-back="${back}">Continuer</button></div>`)},1100)}}
+let PAYCB=null;
+function plusSheet(){curModal='plus';const on=plusOn();S.plan=S.plan||'year';
+ openModal(`<div class="plus"><div class="plushero"><span class="crown">♛</span><b>SANPO+</b><small>${on?'Tu es membre SANPO+':'La balade, en plus généreux'}</small></div>
+ <ul class="perks">${[['×2','Pas-coins doublés sur chaque pas'],['地','Toutes les cartes débloquées, et Hokkaidō + Okinawa'],['箱','Un coffre premium et 20 gemmes chaque jour'],['猫','Un pelage exclusif chaque mois'],['保','2 assurances anti-Game Over par mois'],['♛','Couronne dorée sur ton profil']].map(([i,t])=>`<li><i>${i}</i>${t}</li>`).join('')}</ul>
+ ${on?`<p class="sub" style="text-align:center">Actif jusqu’au ${new Date(S.plusUntil).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</p><button class="btn wide" data-plusoff>Résilier (démo)</button>`:
+ `<div class="plans"><button class="plan ${S.plan==='year'?'sel':''}" data-plan="year"><i>−37 %</i><b>Annuel</b><span>29,99 € / an</span><small>soit 2,50 € / mois</small></button><button class="plan ${S.plan==='month'?'sel':''}" data-plan="month"><b>Mensuel</b><span>3,99 € / mois</span><small>sans engagement</small></button></div>
+ <button class="btn primary wide" data-plusgo>Commencer l’essai gratuit de 7 jours</button><p class="demo">Puis ${S.plan==='year'?'29,99 € par an':'3,99 € par mois'}, annulable à tout moment. Mode démo : aucun paiement réel.</p>`}</div>`)}
+function dailyPlus(){checkDay();if(plusOn()&&S.plusDay!==S.dayKey){S.plusDay=S.dayKey;S.chests=(S.chests||0)+1;S.gems=(S.gems||0)+20;save();setTimeout(()=>toast('SANPO+ : coffre premium et 20 gemmes du jour reçus'),1500)}}
+$('#mbody').addEventListener('click',e=>{const q=k=>e.target.closest(k);
+ if(q('[data-plus]')){plusSheet();return}
+ const pl=q('[data-plan]');if(pl){S.plan=pl.dataset.plan;plusSheet();return}
+ if(q('[data-plusgo]')){demoPay('SANPO+ · essai 7 jours','0,00 € aujourd’hui',()=>{S.plusUntil=Date.now()+(S.plan==='year'?365:30)*DAY;S.ins=(S.ins||0)+2;S.plusDay='';dailyPlus()});return}
+ if(q('[data-plusoff]')){S.plusUntil=0;save();updHUD();plusSheet();toast('Abonnement résilié (démo)');return}
+ if(q('[data-payok]')){PAYCB&&PAYCB();PAYCB=null;return}
+ if(q('[data-payko]')){shop('gems');return}
+ const bk=q('[data-back]');if(bk){const v=bk.dataset.back;v.startsWith('shop')?shop(v.split(':')[1]):v==='plus'?plusSheet():modal.hidden=true;return}
+ const py=q('[data-pay]');if(py){const v=py.dataset.pay;if(v==='starter')demoPay('Pack Kitsune','2,99 €',()=>{S.starter=1;S.gems=(S.gems||0)+500;if(!S.owned.includes('fur:kitsune'))S.owned.push('fur:kitsune');S.fur='kitsune';applyFur();if(!S.maps.includes('kyoto'))S.maps.push('kyoto')});
+  else{const k=GEMPACKS[+v.split(':')[1]];demoPay(`${k.g.toLocaleString('fr-FR')} gemmes`,k.p,()=>{S.gems=(S.gems||0)+k.g})}return}
+ const gb=q('[data-gbuy]');if(gb){const[t,id]=gb.dataset.gbuy.split(':');
+  if(t==='map'){const m=MAPS.find(x=>x.id===id);buyGem(m.gem||Math.round(mapNeed(id)/40),'Carte '+m.n,()=>{S.maps.push(id);save();shop('gems')})}
+  if(t==='fur'){const f=FURS.find(x=>x.id===id);buyGem(f.g,'Pelage '+f.n,()=>{S.owned.push('fur:'+id);S.fur=id;applyFur();save();shop('gems')})}
+  if(t==='chest5')buyGem(200,'5 coffres',()=>{S.chests=(S.chests||0)+5;save();shop('gems')});
+  if(t==='coins')buyGem(100,'1 000 pas-coins',()=>{S.coins+=1000;save();shop('gems')});updHUD();return}});
+$('#gempill').onclick=()=>shop('gems');
+ICONS.gem=`<g stroke="#3b2a4a" stroke-width="1.6" stroke-linejoin="round"><path d="M9 6h14l5 7-12 14L4 13z" fill="#7fd8ff"/><path d="M4 13h24M9 6l3 7 4 14 4-14 3-7M12 13l4-7 4 7" fill="none" stroke="#2a8fd0"/><path d="M10 9l2 4" stroke="#fff" stroke-width="2"/></g>`;
+document.querySelectorAll('[data-ic="gem"]').forEach(e=>e.innerHTML=svgI('gem'));
+dailyPlus();
 initCat3D();initWorld();syncWxIcon();
 $('#cat-name').value=S.name;
 updHUD();
