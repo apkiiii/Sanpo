@@ -360,6 +360,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
 #maptitle span{font:800 15px var(--f-body);letter-spacing:.5em;text-transform:uppercase;margin-top:8px;margin-right:-.5em}
 #maptitle.go{animation:mt 2.6s ease both}
 @keyframes mt{0%{opacity:0;transform:translateY(14px) scale(.96);filter:blur(6px)}18%,70%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-10px)}}
+.chip.pedo{background:#29b987}
 </style>
 
 <div id="app">
@@ -403,6 +404,7 @@ body{background:radial-gradient(circle at 50% 0,#3a2a5a,#140f22 70%)}
     <h3>Réglages</h3>
     <div class="setrow"><span>Effets sonores</span><button class="switch" id="s-sfx" role="switch" aria-checked="true" aria-label="Effets sonores"></button></div>
     <div class="setrow"><span>Objectif par jour</span><div class="chips2" id="s-goal"><button data-g="4000">4k</button><button data-g="6000">6k</button><button data-g="8000">8k</button><button data-g="10000">10k</button></div></div>
+    <div class="setrow"><span>Sensibilité des pas</span><div class="chips2" id="s-sens"><button data-s="low">Basse</button><button data-s="mid">Normale</button><button data-s="high">Haute</button></div></div>
     <div class="setrow"><label for="s-name">Nom du chat</label><input id="s-name" maxlength="12" autocomplete="off" spellcheck="false"></div>
     <button class="btn" id="s-tuto">Revoir le tutoriel</button>
     <button class="btn danger" id="s-reset">Recommencer à zéro</button>
@@ -765,7 +767,7 @@ function updHUD(){const ls=$('#ls');if(!ls.children.length)for(let i=0;i<10;i++)
  const nx=CITIES[S.cards];$('#lcap').textContent=nx?`Vers ${nx.n}`:'Carnet complet';{const pr=nx?(S.total%1e4)/1e4:1;$('#lfill').style.width=(pr*100)+'%';$('#lval').textContent=Math.floor(pr*100)+' %'}
  $('#day').textContent=new Date(S.sim).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
  $('#gfill').style.width=Math.max(3,S.weight)+'%';$('#gstate').textContent=STATES[stage(S.weight)];$('#fitbar').dataset.s=stage(S.weight);
- const ch=[];if(S.auto)ch.push(`<span class="chip live">${LIVE?`直 ${LIVE.city} · ${LIVE.t}°C · ${LIVE.desc}`:wxMsg}</span>`);if(S.streak)ch.push(`<span class="chip fire">炎 Série ${S.streak} j</span>`);if(S.tea>S.sim)ch.push('<span class="chip">茶 Poids gelé 24 h</span>');if(S.ins)ch.push(`<span class="chip">保 Assurance ×${S.ins}</span>`);
+ const ch=[];if(S.auto)ch.push(`<span class="chip live">${LIVE?`直 ${LIVE.city} · ${LIVE.t}°C · ${LIVE.desc}`:wxMsg}</span>`);if(typeof pedo!=='undefined'&&pedo)ch.push(`<span class="chip pedo">● Podomètre · ${sess.toLocaleString('fr-FR')} pas</span>`);if(S.streak)ch.push(`<span class="chip fire">炎 Série ${S.streak} j</span>`);if(S.tea>S.sim)ch.push('<span class="chip">茶 Poids gelé 24 h</span>');if(S.ins)ch.push(`<span class="chip">保 Assurance ×${S.ins}</span>`);
  if(blueHour())ch.push('<span class="chip blue">Heure bleue · Maneki-neko</span>');if(S.weight>=70)ch.push('<span class="chip warn">Il bloque la ruelle — marche !</span>');
  $('#chips').innerHTML=ch.join('');
  document.querySelectorAll('#wx button').forEach(b=>b.setAttribute('aria-pressed',S.auto?b.dataset.w==='auto':b.dataset.w===S.weather));
@@ -879,19 +881,34 @@ async function openMeteo(){try{let lat,lon,name=S.city;
 /* ============ PODOMÈTRE RÉEL (accéléromètre) ============
    Pic d'accélération filtrée = un pas. Chaque pas fait avancer le chat ;
    500 pas réels font maigrir le chat autant que le bouton +500. */
-let pedo=false,pend=0,lp=9.8,armed=true,lastStep=0,gotMotion=false,wake=null;
-function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;gotMotion=true;
- const m=Math.hypot(a.x,a.y,a.z);lp+=(m-lp)*.1;const d=m-lp,now=performance.now();
- if(armed&&d>1.6&&now-lastStep>280){armed=false;lastStep=now;realStep()}if(d<.3)armed=true}
-function realStep(){if(go!=null)return;checkDay();S.dly.w++;addToday(1);levelCheck(S.total);pend++;S.steps++;S.total++;
- if(pend>=10){S.coins+=Math.round(pend/10*[1,.7,.4][stage(S.weight)]);S.weight=Math.max(0,S.weight-pend*11/500);pend=0;
-  const c=Math.min(CITIES.length,Math.floor(S.total/1e4));if(c>S.cards){S.cards=c;queueModal(()=>unlock(c-1))}save();updHUD()}}
+// Podomètre : magnitude → retrait gravité → lissage → seuil adaptatif + hystérésis → validation de rythme
+function makePedo(onStep,opt={}){let g=null,s=0,env=.8,armed=false,last=0,prevDt=0,run=[],walking=false,lt=null;const MIN=opt.min||.42;
+ return function feed(t,ax,ay,az){if(lt===null){lt=t;g=Math.hypot(ax,ay,az);return}let dt=(t-lt)/1000;lt=t;if(dt<=0)return;if(dt>.25)dt=.25;
+  const m=Math.hypot(ax,ay,az);g+=(m-g)*(1-Math.exp(-dt/1.0));const d=m-g;s+=(d-s)*(1-Math.exp(-dt/.06));
+  env+=(Math.abs(s)-env)*(1-Math.exp(-dt/1.5));const thr=Math.max(MIN,env*.9);
+  if(!armed&&s<-thr*.3)armed=true;
+  if(armed&&s>thr){armed=false;const iv=(t-last)/1000;
+   if(last&&iv<.3){last=t;walking=false;run=[];prevDt=0;return} // secousse : trop rapide pour un pas
+   last=t;
+   if(!last||iv>2.2){walking=false;run=[t];prevDt=0;return}
+   if(walking){if(iv>prevDt*.5&&iv<prevDt*2){onStep(1);prevDt=prevDt*.7+iv*.3}else{walking=false;run=[t];prevDt=0}return}
+   const regular=!prevDt||(iv>prevDt*.72&&iv<prevDt*1.38);prevDt=prevDt?prevDt*.6+iv*.4:iv;
+   if(!regular){run=[t];prevDt=iv;return}run.push(t);if(run.length>=5){walking=true;onStep(run.length);run=[]}}}}
+let pedo=false,pend=0,lastStep=0,gotMotion=false,wake=null,feed=null,sess=0;
+const SENS={high:.28,mid:.42,low:.7};
+function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;gotMotion=true;feed(performance.now(),a.x,a.y,a.z)}
+function realStep(k=1){if(go!=null)return;const old=S.total;checkDay();S.dly.w+=k;addToday(k);pend+=k;sess+=k;S.steps+=k;S.total+=k;lastStep=performance.now();levelCheck(old);
+ if(S.weight>=70&&pend>=10)toast('Le mochi fond à chaque pas !');
+ if(pend>=10){S.coins+=Math.round(pend/10*[1,.7,.4][stage(S.weight)]);S.weight=Math.max(0,S.weight-pend*11/500);pend=0;save()}
+ const c=Math.min(CITIES.length,Math.floor(S.total/1e4));if(c>S.cards){S.cards=c;queueModal(()=>unlock(c-1))}updHUD()}
+function flushPend(){if(pend){S.coins+=Math.round(pend/10*[1,.7,.4][stage(S.weight)]);S.weight=Math.max(0,S.weight-pend*11/500);pend=0}save();updHUD()}
+async function grabWake(){try{if(pedo&&document.visibilityState==='visible'&&navigator.wakeLock)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')grabWake();else if(pedo)flushPend()});
 async function togglePedo(){const b=$('#b-real');
- if(pedo){pedo=false;removeEventListener('devicemotion',onMotion);try{wake&&wake.release()}catch(e){}b.querySelector('.lb').textContent='Marche réelle';b.classList.remove('on');save();updHUD();return}
- try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){if(await DeviceMotionEvent.requestPermission()!=='granted'){toast('Accès aux mouvements refusé.');return}}}catch(e){toast('Accès aux mouvements refusé.');return}
- pedo=true;gotMotion=false;addEventListener('devicemotion',onMotion);b.querySelector('.lb').textContent='Podomètre actif';b.classList.add('on');
- try{wake=await navigator.wakeLock.request('screen')}catch(e){}
- toast('Marche avec ton téléphone : le chat marche avec toi.');
+ if(pedo){pedo=false;removeEventListener('devicemotion',onMotion);try{wake&&wake.release()}catch(e){}b.querySelector('.lb').textContent='Marche réelle';b.classList.remove('on');flushPend();toast(`Balade terminée · ${sess.toLocaleString('fr-FR')} pas comptés`);return}
+ try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){if(await DeviceMotionEvent.requestPermission()!=='granted'){toast('Accès aux mouvements refusé. Autorise-le dans les réglages du navigateur.');return}}}catch(e){toast('Accès aux mouvements refusé.');return}
+ feed=makePedo(n=>realStep(n),{min:SENS[S.sens||'mid']});sess=0;pedo=true;gotMotion=false;addEventListener('devicemotion',onMotion);b.querySelector('.lb').textContent='Podomètre actif';b.classList.add('on');
+ grabWake();updHUD();toast('Podomètre activé : marche, les premiers pas comptent après quelques secondes.');
  setTimeout(()=>{if(pedo&&!gotMotion){togglePedo();toast('Capteur de mouvement indisponible ici. Ouvre SANPO dans le navigateur du téléphone.')}},3000)}
 $('#b-real').onclick=togglePedo;
 /* ============ FX KAWAII : cœurs, gains, confettis, sons ============ */
@@ -1443,10 +1460,11 @@ function tutorial(i=0){curModal='';const t=TUTO[i],last=i===TUTO.length-1;
 $('#mbody').addEventListener('click',e=>{const t=e.target.closest('[data-tuto]');if(t){if(t.dataset.tuto==='end'){S.tuto=1;save();modal.hidden=true;setTimeout(omikuji,500)}else tutorial(+t.dataset.tuto)}
  if(e.target.closest('[data-close]'))modal.hidden=true});
 /* réglages */
-function syncSettings(){$('#s-sfx').setAttribute('aria-checked',String(S.sfx!==false));document.querySelectorAll('#s-goal button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.g===S.goal)));if(document.activeElement!==$('#s-name'))$('#s-name').value=S.name}
+function syncSettings(){document.querySelectorAll('#s-sens button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.s===(S.sens||'mid'))));$('#s-sfx').setAttribute('aria-checked',String(S.sfx!==false));document.querySelectorAll('#s-goal button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.g===S.goal)));if(document.activeElement!==$('#s-name'))$('#s-name').value=S.name}
 $('#s-sfx').onclick=()=>{S.sfx=S.sfx===false;save();syncSettings()};
 $('#s-goal').onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;S.goal=+b.dataset.g;save();syncSettings();updHUD()};
 $('#s-name').oninput=e=>{const v=e.target.value.trim();if(v){S.name=v;save();updHUD()}};
+$('#s-sens').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.sens=b.dataset.s;save();syncSettings();if(pedo)feed=makePedo(n=>realStep(n),{min:SENS[S.sens]});toast('Sensibilité : '+b.textContent)};
 $('#s-tuto').onclick=()=>{$('#lab').hidden=true;tutorial(0)};
 let armT;$('#s-reset').onclick=e=>{const b=$('#s-reset');if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Toucher encore pour confirmer';clearTimeout(armT);armT=setTimeout(()=>{b.classList.remove('arm');b.textContent='Recommencer à zéro'},3500);return}
  try{localStorage.removeItem('sanpo_v1')}catch(_){}location.reload()};
