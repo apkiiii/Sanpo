@@ -130,6 +130,11 @@ class Settings(BaseSettings):
 
     # --- Data ---------------------------------------------------------------
     historical_data_dir: str = "data/historical"
+    simulation_data_source: str = "csv"  # "csv" (verified history replay) or "synthetic" (pipeline demo only)
+    simulation_step_seconds: float = Field(1.0, ge=0.0)
+    simulation_start: str = ""  # ISO date to start the replay; default = 60 days after data start
+    strategy_validation_path: str = "var/strategy_validation.json"
+    log_level: str = "INFO"
     economic_calendar_path: str = ""  # path to a verified CSV/JSON export
 
     # --- Database -----------------------------------------------------------

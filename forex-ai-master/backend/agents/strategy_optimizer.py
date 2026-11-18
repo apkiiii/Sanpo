@@ -9,8 +9,10 @@ the operator.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -80,6 +82,31 @@ class StrategyOptimizer(Agent):
     def eligible_strategies(self, symbol: str, allow_synthetic: bool = False) -> list[StrategyRecord]:
         return [r for (s, sym), r in self.records.items()
                 if sym == symbol and r.eligible and (allow_synthetic or not r.synthetic)]
+
+    def save(self, path: str) -> None:
+        """Persist the validation table (JSON) so the runtime does not re-run validations at start-up."""
+        rows = []
+        for r in self.records.values():
+            row = r.summary()
+            row["oos_metrics"] = {k: v for k, v in r.oos_metrics.items() if not isinstance(v, dict)}
+            row["monte_carlo"] = r.monte_carlo
+            rows.append(row)
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_text(json.dumps(rows, indent=2, default=str))
+
+    def load(self, path: str) -> int:
+        p = Path(path)
+        if not p.exists():
+            return 0
+        for row in json.loads(p.read_text()):
+            if row["strategy"] not in STRATEGIES:
+                continue
+            self.records[(row["strategy"], row["symbol"])] = StrategyRecord(
+                row["strategy"], row["symbol"], row["timeframe"], bool(row["eligible"]), list(row["reasons"]),
+                dict(row["params"]), dict(row.get("oos_metrics", {})), float(row.get("efficiency") or 0.0),
+                dict(row.get("monte_carlo", {})), bool(row["synthetic"]),
+                datetime.fromisoformat(row["validated_at"]))
+        return len(self.records)
 
     def ranking(self) -> list[dict[str, Any]]:
         rows = [r.summary() for r in self.records.values()]
