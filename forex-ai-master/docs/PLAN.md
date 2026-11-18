@@ -68,12 +68,12 @@ Transversal : `SafetyManager` (kill switch, mode sécurité), `SessionTracker` (
 ## 6. Étapes
 
 1. Analyse & architecture ✅
-2. Configuration, types, logs, erreurs, instruments
-3. Indicateurs + 7 bots (testables isolément)
-4. Bot Maître (consensus, décision, contradictions)
-5. Moteur de trading en simulation (broker simulé, ordres, positions, réconciliation, kill switch)
-6. Backtesting (coûts réalistes, walk-forward, Monte Carlo, rapports)
-7. Connecteur broker : interface + simulé ; spécification pour le broker réel
-8. Dashboard (API FastAPI, WebSocket, React)
-9. Tests de sécurité et scénarios extrêmes, garde LIVE
-10. Documentation
+2. Configuration, types, logs, erreurs, instruments ✅
+3. Indicateurs + 7 bots (testables isolément) ✅
+4. Bot Maître (consensus, décision, contradictions) ✅
+5. Moteur de trading en simulation (broker simulé, ordres, positions, réconciliation, kill switch) ✅
+6. Backtesting (coûts réalistes, walk-forward, Monte Carlo, rapports) ✅ — moteur prêt, **aucune donnée réelle utilisée**
+7. Connecteur broker : interface + simulé + tests de contrat ✅ — **connecteur réel en attente du choix du broker**
+8. Dashboard (API FastAPI, WebSocket, React) ✅
+9. Tests de sécurité et scénarios extrêmes, garde LIVE ✅
+10. Documentation ✅
