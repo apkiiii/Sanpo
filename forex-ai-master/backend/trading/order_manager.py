@@ -45,6 +45,7 @@ class ManagedOrder:
     updated_at: datetime = field(default_factory=utcnow)
     error: str = ""
     slippage_pips: float | None = None
+    reference_price: float | None = None  # executable price when the order was sent
 
 
 class OrderManager:
@@ -109,12 +110,13 @@ class OrderManager:
         margin = self.broker.calculate_margin(s.symbol, approval.units)
         if margin > acct.free_margin:
             raise OrderRejectedError(f"insufficient free margin ({margin:.2f} > {acct.free_margin:.2f})")
-        max_price = s.entry + s.direction.sign * self.max_slippage_pips * spec.pip_size
+        # Slippage is bounded relative to the executable price seen now (the Risk Manager sized the trade on it).
+        max_price = ref + s.direction.sign * self.max_slippage_pips * spec.pip_size
 
         request = OrderRequest(cid, s.symbol, OrderSide.BUY if s.direction is Direction.LONG else OrderSide.SELL,
                                approval.units, spec.round_price(s.stop_loss), spec.round_price(s.take_profit),
                                max_price, comment=s.strategy)
-        order = ManagedOrder(cid, proposal, request)
+        order = ManagedOrder(cid, proposal, request, reference_price=ref)
         self.orders[cid] = order
         self._emit("created", order)
         self._send_with_recovery(order)
@@ -168,7 +170,8 @@ class OrderManager:
             spec = get_instrument(order.request.symbol)
             if result.fill_price is not None:
                 d = order.proposal.setup.direction.sign
-                order.slippage_pips = (result.fill_price - order.proposal.setup.entry) * d / spec.pip_size
+                ref = order.reference_price if order.reference_price is not None else order.proposal.setup.entry
+                order.slippage_pips = (result.fill_price - ref) * d / spec.pip_size
             self._emit("filled", order)
         elif result.status is OrderStatus.REJECTED:
             order.status, order.error = OrderStatus.REJECTED, result.reason

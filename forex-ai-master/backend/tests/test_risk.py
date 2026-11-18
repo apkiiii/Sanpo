@@ -17,7 +17,7 @@ pytestmark = pytest.mark.critical
 def test_position_size_eurusd() -> None:
     # 0.25 % of 100k = 250 USD ; 20 pips stop ; pip value per unit 0.0001 -> 125,000 units
     r = size_position(100_000, 100_000, 0.25, 1.1000, 1.0980, "EURUSD", "USD", MIDS)
-    assert r.units == 125_000 and r.risk_amount == pytest.approx(250.0)
+    assert r.units == 125_000 and r.risk_amount == pytest.approx(250.0)  # raw sizing (no slippage buffer)
 
 
 def test_position_size_usdjpy_converts_quote() -> None:
@@ -209,3 +209,22 @@ def test_safety_restore_never_clears() -> None:
     assert sm.state.kill_switch and sm.state.safety_mode
     sm.clear_safety_reason("broker disconnected", "system")
     assert not sm.state.safety_mode and sm.state.kill_switch
+
+
+def test_sizing_uses_executable_price_after_drift(engine: RiskEngine) -> None:
+    """Planned entry 1.0995 but the ask is now 1.1001: the real stop distance (26 pips) drives the size."""
+    from backend.core.types import TradeSetup
+    s = TradeSetup("EURUSD", Direction.LONG, 1.0995, 1.0975, 1.1055, 1.0975, "t", "M15", 0.6)
+    d = engine.evaluate(make_proposal(s), make_state())  # quote ask = 1.1000 + 0.4 pip
+    assert d.approved, d.reasons
+    real_risk = d.units * (1.10004 - 1.0975)
+    assert real_risk <= 250.0 + 1e-6  # never above 0.25 % of 100k at the real fill price
+    assert d.units < 125_000  # smaller than the 20-pip sizing based on the planned entry
+
+
+def test_reward_risk_rechecked_at_current_price(engine: RiskEngine) -> None:
+    from backend.core.types import TradeSetup
+    # planned RR 2.0 from 1.0990, but at the current ask (~1.1000) RR falls to ~1.33 -> refused
+    s = TradeSetup("EURUSD", Direction.LONG, 1.0990, 1.0960, 1.1050, 1.0960, "t", "M15", 0.6)
+    d = engine.evaluate(make_proposal(s), make_state())
+    assert not d.checks["reward_risk"][0]

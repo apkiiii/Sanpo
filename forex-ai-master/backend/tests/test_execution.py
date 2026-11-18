@@ -265,3 +265,25 @@ def test_api_slow_does_not_block_approval_expiry(engine: RiskEngine, broker: Sim
     manager = OrderManager(broker, lambda ap: engine.verify_approval(ap, NOW + timedelta(minutes=2)), lambda: False)
     with pytest.raises(RiskViolationError):
         manager.submit(proposal, decision)
+
+
+def test_drifted_but_approved_trade_executes(engine: RiskEngine, broker: SimulatedBroker) -> None:
+    """Regression: a trade approved with an allowed entry drift must not be refused for 'slippage'."""
+    q = broker.get_quote("EURUSD")
+    setup = make_setup(entry=q.ask - 0.0005, stop_pips=30)  # planned 5 pips below the current ask
+    proposal = make_proposal(setup)
+    decision = engine.evaluate(proposal, make_state())
+    assert decision.approved, decision.reasons
+    order = om(engine, broker).submit(proposal, decision)
+    assert order.status is OrderStatus.FILLED, order.error
+    assert abs(order.slippage_pips or 0) < 0.5  # measured against the executable price
+
+
+def test_realised_risk_never_exceeds_limit_even_with_max_slippage(engine: RiskEngine, broker: SimulatedBroker) -> None:
+    proposal, decision = approved(engine, broker)
+    broker.faults.extra_slippage_pips = 1.99  # just under the 2-pip tolerance
+    order = om(engine, broker).submit(proposal, decision)
+    assert order.status is OrderStatus.FILLED
+    pos = broker.get_positions()[0]
+    realised_risk = (pos.entry_price - pos.stop_loss) * pos.units  # EURUSD: quote = USD
+    assert realised_risk <= 100_000 * 0.0025 + 1e-6

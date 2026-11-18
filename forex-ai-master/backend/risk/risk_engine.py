@@ -146,17 +146,24 @@ class RiskEngine:
                                "session target reached: no new entries" if state.session_target_reached else "open")
         c["market_open"] = (state.market_open, "open" if state.market_open else "market closed")
 
+        # Sizing, stop distance and reward/risk are measured from the price at which the order would
+        # actually fill now (ask for longs, bid for shorts), not from the planned entry: if the market has
+        # drifted, the real risk is larger and must still fit in the limits.
+        exec_price = s.entry
+        if state.quote is not None and state.quote.ask > state.quote.bid > 0:
+            exec_price = state.quote.ask if s.direction is Direction.LONG else state.quote.bid
+        risk_dist = (exec_price - s.stop_loss) * s.direction.sign
+        reward_dist = (s.take_profit - exec_price) * s.direction.sign
+
         # --- stop-loss / take-profit sanity
-        sl_ok = s.stop_loss > 0 and ((s.direction is Direction.LONG and s.stop_loss < s.entry) or
-                                     (s.direction is Direction.SHORT and s.stop_loss > s.entry))
+        sl_ok = s.stop_loss > 0 and risk_dist > 0 and (s.entry - s.stop_loss) * s.direction.sign > 0
         c["stop_loss"] = (sl_ok, "valid" if sl_ok else "missing or wrong-side stop-loss")
-        tp_ok = (s.direction is Direction.LONG and s.take_profit > s.entry) or \
-                (s.direction is Direction.SHORT and s.take_profit < s.entry)
+        tp_ok = reward_dist > 0 and (s.take_profit - s.entry) * s.direction.sign > 0
         c["take_profit"] = (tp_ok, "valid" if tp_ok else "take-profit on wrong side")
-        stop_pips = spec.pips(s.risk_distance)
+        stop_pips = spec.pips(max(risk_dist, 0.0))
         c["min_stop"] = (stop_pips >= lim.min_stop_pips, f"{stop_pips:.1f} pips (min {lim.min_stop_pips})")
-        rr = s.reward_risk
-        c["reward_risk"] = (rr >= lim.min_reward_risk, f"{rr:.2f} (min {lim.min_reward_risk})")
+        rr = reward_dist / risk_dist if risk_dist > 0 else 0.0
+        c["reward_risk"] = (rr >= lim.min_reward_risk, f"{rr:.2f} at current price (min {lim.min_reward_risk})")
 
         # --- execution conditions
         if state.quote is None:
@@ -168,7 +175,7 @@ class RiskEngine:
                           f"age {age.total_seconds():.0f}s" if fresh else "stale or invalid quote")
             spread_pips = spec.pips(state.quote.spread)
             c["spread"] = (spread_pips <= lim.max_spread_pips, f"{spread_pips:.2f} pips (max {lim.max_spread_pips})")
-            ratio = state.quote.spread / s.risk_distance if s.risk_distance > 0 else 1.0
+            ratio = state.quote.spread / risk_dist if risk_dist > 0 else 1.0
             c["spread_vs_stop"] = (ratio <= lim.max_spread_to_stop_ratio,
                                    f"{ratio:.0%} of stop (max {lim.max_spread_to_stop_ratio:.0%})")
             # Entry drift: the price must still be close to the planned entry.
@@ -205,7 +212,9 @@ class RiskEngine:
                           and drawdown_pct < lim.max_drawdown_pct / 2)
         risk_pct = lim.max_exceptional_risk_per_trade_pct if exceptional_ok else lim.max_risk_per_trade_pct
         try:
-            sizing = size_position(balance, equity, risk_pct, s.entry, s.stop_loss, s.symbol, self.account_ccy,
+            # Size for the worst accepted fill (max slippage), so the realised risk can never exceed the limit.
+            worst_fill = exec_price + s.direction.sign * lim.max_slippage_pips * spec.pip_size
+            sizing = size_position(balance, equity, risk_pct, worst_fill, s.stop_loss, s.symbol, self.account_ccy,
                                    state.mid_prices)
         except Exception as exc:  # noqa: BLE001 - missing conversion price etc.
             c["sizing"] = (False, f"sizing failed: {exc}")
@@ -224,7 +233,7 @@ class RiskEngine:
         c["drawdown_projected"] = (drawdown_pct + total_pct <= lim.max_drawdown_pct + 1e-9,
                                    f"worst case {drawdown_pct + total_pct:.2f}% (max {lim.max_drawdown_pct}%)")
 
-        new = OpenRisk(s.symbol, s.direction, sizing.units, s.entry, s.stop_loss, sizing.risk_amount)
+        new = OpenRisk(s.symbol, s.direction, sizing.units, exec_price, s.stop_loss, sizing.risk_amount)
         exposure = self._currency_exposure([*state.open_positions, new])
         worst_ccy = max(exposure.items(), key=lambda kv: abs(kv[1]), default=("-", 0.0))
         worst_pct = abs(worst_ccy[1]) / cap * 100 if cap > 0 else 100.0
