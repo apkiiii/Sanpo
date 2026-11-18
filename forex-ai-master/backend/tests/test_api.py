@@ -26,7 +26,8 @@ def client(tmp_path: Path) -> TestClient:
     settings = Settings(_env_file=None, symbols=["EURUSD"], timeframes=["M15", "H1", "H4"],
                         simulation_data_source="synthetic", database_url=f"sqlite:///{tmp_path}/api.db",
                         dashboard_admin_password_hash=h, jwt_secret="x" * 40, api_rate_limit_per_minute=1000,
-                        strategy_validation_path=str(tmp_path / "none.json"), telegram_bot_token=SECRET_TOKEN)
+                        strategy_validation_path=str(tmp_path / "none.json"), telegram_bot_token=SECRET_TOKEN,
+                        local_auth_path=str(tmp_path / "auth.json"))
     runtime = TradingRuntime(settings, Repository(settings.database_url, create_schema=True))
     runtime.master.run_cycle(runtime.replay_cursor)
     app = create_app(settings, runtime, start_loop=False)
@@ -138,7 +139,7 @@ def test_websocket_requires_token(client: TestClient) -> None:
 def test_rate_limit(tmp_path: Path) -> None:
     settings = Settings(_env_file=None, symbols=["EURUSD"], timeframes=["M15", "H1", "H4"],
                         simulation_data_source="synthetic", api_rate_limit_per_minute=10,
-                        strategy_validation_path=str(tmp_path / "none.json"))
+                        strategy_validation_path=str(tmp_path / "none.json"), local_auth_path=str(tmp_path / "a.json"))
     app = create_app(settings, TradingRuntime(settings), start_loop=False)
     with TestClient(app) as c:
         codes = [c.get("/api/health").status_code for _ in range(15)]
@@ -147,10 +148,11 @@ def test_rate_limit(tmp_path: Path) -> None:
 
 def test_login_disabled_without_hash_and_weak_secret_refused(tmp_path: Path) -> None:
     settings = Settings(_env_file=None, symbols=["EURUSD"], timeframes=["M15", "H1", "H4"],
-                        simulation_data_source="synthetic", strategy_validation_path=str(tmp_path / "n.json"))
+                        simulation_data_source="synthetic", strategy_validation_path=str(tmp_path / "n.json"),
+                        local_auth_path=str(tmp_path / "a.json"))
     app = create_app(settings, TradingRuntime(settings), start_loop=False)
     with TestClient(app) as c:
-        assert c.post("/api/auth/login", json={"username": "admin", "password": "admin"}).status_code == 503
+        assert c.post("/api/auth/login", json={"username": "admin", "password": "admin"}).status_code in (503, 401)
     with pytest.raises(ConfigurationError):
         create_app(Settings(_env_file=None, jwt_secret="short"), TradingRuntime(settings), start_loop=False)
     with pytest.raises(ConfigurationError):

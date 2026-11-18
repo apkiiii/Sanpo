@@ -1,0 +1,64 @@
+name: Forex AI Master - Windows desktop build
+
+on:
+  push:
+    branches: ["claude/forex-ai-master-system-nrlnym"]
+    paths: ["forex-ai-master/**", ".github/workflows/forex-desktop-windows.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: forex-ai-master
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build dashboard
+        working-directory: forex-ai-master/frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt "pyinstaller==6.22.3" "pyinstaller-hooks-contrib==2026.10"
+
+      - name: Run the test suite on Windows
+        run: python -m pytest -q
+
+      - name: Build ForexAIMaster.exe
+        run: pyinstaller --noconfirm desktop/forex_ai_master.spec
+
+      - name: Smoke test the executable
+        shell: pwsh
+        run: |
+          $env:APPDATA = "$env:RUNNER_TEMP\appdata"
+          New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
+          .\dist\ForexAIMaster.exe --check
+          if ($LASTEXITCODE -ne 0) { throw "executable self-check failed" }
+          Copy-Item desktop\LISEZMOI.txt dist\
+          Get-FileHash dist\ForexAIMaster.exe -Algorithm SHA256 | Format-List | Out-File dist\SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ForexAIMaster-windows
+          path: |
+            forex-ai-master/dist/ForexAIMaster.exe
+            forex-ai-master/dist/LISEZMOI.txt
+            forex-ai-master/dist/SHA256.txt
+          retention-days: 30

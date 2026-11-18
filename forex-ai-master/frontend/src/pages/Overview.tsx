@@ -1,8 +1,9 @@
+import { useState } from "react";
 import type { Snapshot } from "../api";
-import { fmt, money, time } from "../api";
+import { api, fmt, money, time } from "../api";
 import { Badge, Progress, Section, Stat } from "../components/ui";
 
-export default function Overview({ s }: { s: Snapshot }) {
+export default function Overview({ s, isAdmin, onChange }: { s: Snapshot; isAdmin: boolean; onChange: () => void }) {
   const p = s.portfolio;
   const openRisk = s.open_positions.reduce((a, x) => a + (x.initial_risk || 0), 0);
   const sess = p.session;
@@ -18,6 +19,8 @@ export default function Overview({ s }: { s: Snapshot }) {
         <Stat label="Positions ouvertes" value={s.open_positions.length} hint={`max ${s.risk_limits.max_open_positions}`} />
         <Stat label="Trades (session / jour)" value={`${sess.trades} / ${p.day.trades}`} hint={`${p.consecutive_losses} perte(s) consécutive(s)`} />
       </div>
+
+      {s.mode === "simulation" && <DemoAccount s={s} isAdmin={isAdmin} onChange={onChange} />}
 
       <Section title={`Objectif de session (${p.target.enabled ? "activé" : "désactivé"})`} right={p.target.reached ? <Badge value="executed" /> : null}>
         <div className="mb-2 flex justify-between text-sm">
@@ -86,5 +89,70 @@ function PeriodTable({ p }: { p: Snapshot["portfolio"]["session"] }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+function DemoAccount({ s, isAdmin, onChange }: { s: Snapshot; isAdmin: boolean; onChange: () => void }) {
+  const [amount, setAmount] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const value = Number(amount.replace(",", "."));
+  const valid = Number.isFinite(value) && value > 0;
+  const p = s.portfolio;
+
+  async function move(kind: "deposit" | "withdraw") {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await api<{ balance: number }>(`/api/account/${kind}`, { method: "POST", body: JSON.stringify({ amount: value }) });
+      setMsg({ ok: true, text: `${kind === "deposit" ? "Dépôt" : "Retrait"} de ${money(value)} effectué. Nouvelle balance : ${money(r.balance)}.` });
+      setAmount("");
+      onChange();
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section title="Compte démo (argent fictif)">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              id="demo-amount"
+              inputMode="decimal"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              placeholder="Montant en $ (ex. 40)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button className="btn flex-1 bg-emerald-600 hover:bg-emerald-500" disabled={!isAdmin || !valid || busy} onClick={() => move("deposit")}>Déposer</button>
+            <button className="btn flex-1 bg-slate-700 hover:bg-slate-600" disabled={!isAdmin || !valid || busy} onClick={() => move("withdraw")}>Retirer</button>
+          </div>
+          {msg && <p className={`text-sm ${msg.ok ? "text-emerald-300" : "text-rose-400"}`}>{msg.text}</p>}
+          <p className="text-xs text-slate-400">
+            Argent virtuel uniquement. Un dépôt ou un retrait ne compte ni comme un gain ni comme une perte, et ne déclenche aucune limite.
+            Le retrait est limité à la marge libre si des positions sont ouvertes.
+          </p>
+        </div>
+        <table>
+          <tbody>
+            <tr><td className="text-slate-400">Capital de départ</td><td className="text-right tabular-nums">{money(p.initial_balance)}</td></tr>
+            <tr><td className="text-slate-400">Dépôts − retraits</td><td className="text-right tabular-nums">{money(p.net_deposits)}</td></tr>
+            <tr><td className="text-slate-400">Balance actuelle</td><td className="text-right tabular-nums">{money(p.balance)}</td></tr>
+            {s.cash_history.slice().reverse().slice(0, 5).map((c) => (
+              <tr key={c.time + c.amount}>
+                <td className="text-xs text-slate-500">{c.amount > 0 ? "Dépôt" : "Retrait"} · {time(c.time)}</td>
+                <td className={`text-right text-xs tabular-nums ${c.amount > 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmt(c.amount)} $</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Section>
   );
 }

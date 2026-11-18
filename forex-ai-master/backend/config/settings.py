@@ -11,9 +11,10 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class TradingMode(StrEnum):
@@ -82,15 +83,15 @@ class Settings(BaseSettings):
     live_min_demo_trades: int = Field(50, ge=1)
     critical_tests_report_path: str = "var/critical_tests.json"
     critical_tests_max_age_days: int = Field(7, ge=1)
-    live_approved_strategies: list[str] = Field(default_factory=list)  # explicit operator whitelist
+    live_approved_strategies: Annotated[list[str], NoDecode] = Field(default_factory=list)  # explicit operator whitelist
 
     # --- Account / market ---------------------------------------------------
     account_currency: str = "USD"
     initial_balance: float = Field(100_000.0, gt=0)
-    symbols: list[str] = Field(
+    symbols: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD"]
     )
-    timeframes: list[str] = Field(default_factory=lambda: ["M5", "M15", "M30", "H1", "H4"])
+    timeframes: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["M5", "M15", "M30", "H1", "H4"])
     entry_timeframe: str = "M15"
     # Smallest position and size increment accepted by the broker, in units (1,000 = micro lot).
     min_trade_units: float = Field(1_000.0, ge=1)
@@ -135,6 +136,7 @@ class Settings(BaseSettings):
     historical_data_dir: str = "data/historical"
     simulation_data_source: str = "csv"  # "csv" (verified history replay) or "synthetic" (pipeline demo only)
     simulation_step_seconds: float = Field(1.0, ge=0.0)
+    synthetic_bars: int = Field(150_000, ge=30_000)  # M5 bars of generated market (~1.5 years)
     simulation_start: str = ""  # ISO date to start the replay; default = 60 days after data start
     strategy_validation_path: str = "var/strategy_validation.json"
     log_level: str = "INFO"
@@ -146,9 +148,11 @@ class Settings(BaseSettings):
     # --- Dashboard auth -----------------------------------------------------
     dashboard_admin_username: str = "admin"
     dashboard_admin_password_hash: SecretStr = SecretStr("")
+    # Desktop app: password created on first launch from this computer only, stored hashed in this file.
+    local_auth_path: str = "var/local_auth.json"
     jwt_secret: SecretStr = SecretStr("")
     jwt_expiry_minutes: int = Field(60, ge=5, le=24 * 60)
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://localhost:8080"])
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:5173", "http://localhost:8080"])
     api_rate_limit_per_minute: int = Field(120, ge=10)
 
     # --- Alerts -------------------------------------------------------------

@@ -84,6 +84,7 @@ class SimulatedBroker(BrokerInterface):
         self._positions: dict[str, _SimPosition] = {}
         self._orders: dict[str, OrderResult] = {}
         self._closed: list[ClosedTrade] = []
+        self._cash: list[dict[str, object]] = []
         self._rng = np.random.default_rng(self.config.seed)
         self._lock = threading.RLock()
         self.clock: datetime | None = None  # simulated time; None = wall clock
@@ -139,6 +140,9 @@ class SimulatedBroker(BrokerInterface):
 
     def get_account(self) -> AccountSnapshot:
         self._ensure()
+        return self._account()
+
+    def _account(self) -> AccountSnapshot:
         with self._lock:
             unreal = sum(self._unrealized(p) + p.swap - 0.0 for p in self._positions.values())
             equity = self._balance + unreal
@@ -303,6 +307,85 @@ class SimulatedBroker(BrokerInterface):
                 spec = get_instrument(sp.pos.symbol)
                 sp.swap += nights * price_move_value(sp.pos.symbol, self.config.swap_pips_per_night * spec.pip_size,
                                                      sp.pos.units, self.config.account_ccy, self._mids())
+
+    # ------------------------------------------------------------------ demo money
+    def deposit(self, amount: float) -> float:
+        """Add fictitious money to the demo account. Returns the new balance."""
+        if not 0 < amount <= 100_000_000:
+            raise ValueError("deposit must be between 0 and 100,000,000")
+        with self._lock:
+            self._balance += amount
+            self._cash.append({"time": self._now().isoformat(), "amount": amount})
+            return self._balance
+
+    def withdraw(self, amount: float) -> float:
+        """Remove fictitious money. Refused if it would exceed the balance or the free margin."""
+        if amount <= 0:
+            raise ValueError("withdrawal must be positive")
+        with self._lock:
+            acct = self._account()  # local book-keeping: works even while the feed is disconnected
+            available = min(acct.balance, acct.free_margin)
+            if amount > available + 1e-9:
+                raise OrderRejectedError(f"Retrait refusé : {available:.2f} $ disponibles au maximum "
+                                         "(le reste sert de marge aux positions ouvertes).")
+            self._balance -= amount
+            self._cash.append({"time": self._now().isoformat(), "amount": -amount})
+            return self._balance
+
+    def cash_history(self) -> list[dict[str, object]]:
+        return list(self._cash)
+
+    # ------------------------------------------------------------------ persistence (desktop demo)
+    def export_state(self) -> dict[str, object]:
+        def pos(sp: _SimPosition) -> dict[str, object]:
+            p = sp.pos
+            return {"position_id": p.position_id, "symbol": p.symbol, "direction": p.direction.value,
+                    "units": p.units, "entry_price": p.entry_price, "stop_loss": p.stop_loss,
+                    "take_profit": p.take_profit, "client_order_id": p.client_order_id,
+                    "open_time": p.open_time.isoformat(), "commission_paid": sp.commission_paid, "swap": sp.swap,
+                    "slippage_cost": sp.slippage_cost, "strategy": sp.strategy}
+
+        def trade(t: ClosedTrade) -> dict[str, object]:
+            return {"trade_id": t.trade_id, "symbol": t.symbol, "direction": t.direction.value, "units": t.units,
+                    "entry_price": t.entry_price, "exit_price": t.exit_price, "entry_time": t.entry_time.isoformat(),
+                    "exit_time": t.exit_time.isoformat(), "gross_pnl": t.gross_pnl, "commission": t.commission,
+                    "swap": t.swap, "slippage_cost": t.slippage_cost, "exit_reason": t.exit_reason,
+                    "strategy": t.strategy}
+
+        def order(o: OrderResult) -> dict[str, object]:
+            return {"client_order_id": o.client_order_id, "status": o.status.value, "broker_order_id": o.broker_order_id,
+                    "position_id": o.position_id, "filled_units": o.filled_units, "fill_price": o.fill_price,
+                    "commission": o.commission, "reason": o.reason, "time": o.time.isoformat()}
+
+        with self._lock:
+            return {"balance": self._balance, "positions": [pos(p) for p in self._positions.values()],
+                    "closed": [trade(t) for t in self._closed[-2000:]],
+                    "orders": [order(o) for o in self._orders.values()], "cash": list(self._cash)}
+
+    def import_state(self, data: dict[str, object]) -> None:
+        with self._lock:
+            self._balance = float(data["balance"])  # type: ignore[arg-type]
+            self._positions = {}
+            for d in data.get("positions", []):  # type: ignore[union-attr]
+                bp = BrokerPosition(d["position_id"], d["symbol"], Direction(d["direction"]), float(d["units"]),
+                                    float(d["entry_price"]), d["stop_loss"], d["take_profit"], 0.0, 0.0,
+                                    float(d["commission_paid"]), d.get("client_order_id"),
+                                    datetime.fromisoformat(d["open_time"]))
+                self._positions[bp.position_id] = _SimPosition(bp, float(d["commission_paid"]), float(d["swap"]),
+                                                               float(d["slippage_cost"]), d.get("strategy", ""))
+            self._closed = [ClosedTrade(t["trade_id"], t["symbol"], Direction(t["direction"]), float(t["units"]),
+                                        float(t["entry_price"]), float(t["exit_price"]),
+                                        datetime.fromisoformat(t["entry_time"]), datetime.fromisoformat(t["exit_time"]),
+                                        float(t["gross_pnl"]), float(t["commission"]), float(t["swap"]),
+                                        float(t["slippage_cost"]), t["exit_reason"], t.get("strategy", ""))
+                            for t in data.get("closed", [])]  # type: ignore[union-attr]
+            self._orders = {o["client_order_id"]: OrderResult(o["client_order_id"], OrderStatus(o["status"]),
+                                                              o.get("broker_order_id"), o.get("position_id"),
+                                                              float(o.get("filled_units", 0)), o.get("fill_price"),
+                                                              float(o.get("commission", 0)), o.get("reason", ""),
+                                                              datetime.fromisoformat(o["time"]))
+                            for o in data.get("orders", [])}  # type: ignore[union-attr]
+            self._cash = list(data.get("cash", []))  # type: ignore[arg-type]
 
     # Test helper: create a position the local system does not know about.
     def inject_unknown_position(self, symbol: str, direction: Direction, units: float, entry: float,

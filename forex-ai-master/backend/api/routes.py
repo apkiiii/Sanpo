@@ -26,6 +26,15 @@ class LoginBody(BaseModel):
     password: str = Field(min_length=1, max_length=256)
 
 
+class SetupBody(BaseModel):
+    username: str = Field(min_length=3, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
+    password: str = Field(min_length=12, max_length=256)
+
+
+class AmountBody(BaseModel):
+    amount: float = Field(gt=0, le=100_000_000)
+
+
 class KillSwitchBody(BaseModel):
     reason: str = Field(min_length=3, max_length=200)
 
@@ -48,6 +57,21 @@ def health(request: Request) -> dict[str, Any]:
     r = rt(request)
     return {"status": "ok", "mode": r.settings.trading_mode.value, "cycles": r.cycles,
             "broker_connected": r.broker.is_connected()}
+
+
+@router.get("/auth/status")
+def auth_status(request: Request) -> dict[str, bool]:
+    client = request.client.host if request.client else "unknown"
+    auth = get_auth(request)
+    return {"login_enabled": auth.login_enabled, "setup_available": auth.setup_available(client)}
+
+
+@router.post("/auth/setup")
+def auth_setup(body: SetupBody, request: Request) -> dict[str, Any]:
+    client = request.client.host if request.client else "unknown"
+    token = get_auth(request).setup(body.username, body.password, client)
+    rt(request).audit.record(body.username, "local_admin_created", {"client": client})
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.post("/auth/login")
@@ -153,6 +177,18 @@ def risk_off(body: RiskOffBody, request: Request, user: Principal = Depends(requ
     m.macro.set_manual_risk_off(body.reason)
     m.audit.record(user.username, "manual_risk_off", {"reason": body.reason})
     return {"manual_risk_off": body.reason}
+
+
+@router.post("/account/deposit")
+def deposit(body: AmountBody, request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    """Add fictitious money to the SIMULATION demo account."""
+    return rt(request).cash_flow(body.amount, user.username)
+
+
+@router.post("/account/withdraw")
+def withdraw(body: AmountBody, request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    """Remove fictitious money from the SIMULATION demo account (limited to free margin)."""
+    return rt(request).cash_flow(-body.amount, user.username)
 
 
 @router.put("/session/target")

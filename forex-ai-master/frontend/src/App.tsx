@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentView, Alert, Decision, Dict, Snapshot } from "./api";
-import { api, getToken, login, openFeed, setToken, time } from "./api";
+import { api, getToken, login, openFeed, setToken, setupAccount, time } from "./api";
 import { Badge } from "./components/ui";
 import Bots from "./pages/Bots";
 import Master from "./pages/Master";
@@ -20,8 +20,17 @@ export default function App() {
 function Login({ onDone }: { onDone: () => void }) {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [setup, setSetup] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api<{ login_enabled: boolean; setup_available: boolean }>("/api/auth/status")
+      .then((s) => setSetup(s.setup_available))
+      .catch(() => undefined);
+  }, []);
+  const tooShort = setup && password.length < 12;
+  const mismatch = setup && confirm.length > 0 && confirm !== password;
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <form
@@ -31,7 +40,8 @@ function Login({ onDone }: { onDone: () => void }) {
           setBusy(true);
           setError("");
           try {
-            await login(username, password);
+            if (setup) await setupAccount(username, password);
+            else await login(username, password);
             onDone();
           } catch (err) {
             setError((err as Error).message);
@@ -41,10 +51,16 @@ function Login({ onDone }: { onDone: () => void }) {
         }}
       >
         <h1 className="text-lg font-semibold">Forex AI Master</h1>
-        <input className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Utilisateur" />
-        <input className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+        {setup && <p className="text-sm text-slate-400">Premier lancement : choisissez votre identifiant et un mot de passe (12 caractères minimum). Il protège l'accès au logiciel sur cet ordinateur.</p>}
+        <input id="username" className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Utilisateur" />
+        <input id="password" className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" type="password" autoComplete={setup ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+        {setup && <input id="confirm" className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Confirmer le mot de passe" />}
+        {tooShort && password.length > 0 && <p className="text-xs text-amber-300">Encore {12 - password.length} caractère(s).</p>}
+        {mismatch && <p className="text-xs text-amber-300">Les deux mots de passe sont différents.</p>}
         {error && <p className="text-sm text-rose-400">{error}</p>}
-        <button className="btn w-full bg-sky-600 hover:bg-sky-500" disabled={busy || !password}>Se connecter</button>
+        <button className="btn w-full bg-sky-600 hover:bg-sky-500" disabled={busy || !password || tooShort || (setup && confirm !== password)}>
+          {setup ? "Créer mon accès" : "Se connecter"}
+        </button>
       </form>
     </div>
   );
@@ -142,7 +158,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       {!snap ? (
         <p className="text-slate-400">Chargement…</p>
       ) : tab === "Vue générale" ? (
-        <Overview s={snap} />
+        <Overview s={snap} isAdmin={role === "admin"} onChange={refresh} />
       ) : tab === "7 bots" ? (
         <Bots agents={agents} />
       ) : tab === "Bot maître" ? (

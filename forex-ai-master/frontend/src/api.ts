@@ -50,6 +50,7 @@ export interface Decision {
 
 export interface Snapshot {
   mode: string;
+  cash_history: { time: string; amount: number }[];
   synthetic_data: boolean;
   replay_time: string | null;
   cycles: number;
@@ -65,6 +66,8 @@ export interface Snapshot {
     drawdown_pct: number;
     unrealized_pnl: number;
     consecutive_losses: number;
+    initial_balance: number;
+    net_deposits: number;
     session: Period;
     day: Period;
     week: Period;
@@ -145,6 +148,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export async function login(username: string, password: string): Promise<void> {
   const r = await api<{ access_token: string }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+  setToken(r.access_token);
+}
+
+export async function setupAccount(username: string, password: string): Promise<void> {
+  const r = await api<{ access_token: string }>("/api/auth/setup", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });

@@ -113,3 +113,24 @@ def test_secret_redaction() -> None:
     assert "https://api.telegram.org/bot123456789:" + "A" * 30 not in redact(
         "https://api.telegram.org/bot123456789:" + "A" * 30 + "/sendMessage"
     )
+
+
+def test_list_settings_from_real_environment_variables(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: comma-separated lists in .env / environment must parse (they were JSON-decoded)."""
+    monkeypatch.setenv("SYMBOLS", "EURUSD, GBPUSD")
+    monkeypatch.setenv("TIMEFRAMES", "M15,H1")
+    monkeypatch.setenv("CORS_ORIGINS", "http://127.0.0.1:8765")
+    monkeypatch.setenv("LIVE_APPROVED_STRATEGIES", "pullback,breakout")
+    monkeypatch.setenv("MIN_TRADE_UNITS", "1")
+    s = Settings(_env_file=None)
+    assert s.symbols == ["EURUSD", "GBPUSD"] and s.timeframes == ["M15", "H1"]
+    assert s.cors_origins == ["http://127.0.0.1:8765"] and s.live_approved_strategies == ["pullback", "breakout"]
+    assert s.min_trade_units == 1
+
+
+def test_env_example_parses(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
+    """The shipped .env.example must load as-is."""
+    from pathlib import Path
+    example = Path(__file__).resolve().parents[2] / ".env.example"
+    s = Settings(_env_file=str(example))
+    assert s.trading_mode is TradingMode.SIMULATION and len(s.symbols) == 7

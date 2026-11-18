@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
+import ipaddress
+import json
+import os
 import secrets
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
+from pathlib import Path
 from datetime import timedelta
 
 import bcrypt
@@ -89,7 +93,38 @@ class AuthService:
             if not h.startswith("$2"):
                 raise ConfigurationError("DASHBOARD_ADMIN_PASSWORD_HASH must be a bcrypt hash")
             self._users[settings.dashboard_admin_username] = (h, "admin")
+        self._local_path = Path(settings.local_auth_path)
+        if not h and self._local_path.exists():
+            data = json.loads(self._local_path.read_text())
+            if str(data.get("hash", "")).startswith("$2"):
+                self._users[str(data["username"])] = (str(data["hash"]), "admin")
         self.guard = LoginGuard()
+
+    @staticmethod
+    def is_local(client: str) -> bool:
+        try:
+            return ipaddress.ip_address(client).is_loopback
+        except ValueError:
+            return client == "testclient"  # Starlette test client
+
+    def setup_available(self, client: str) -> bool:
+        return not self.login_enabled and self.is_local(client)
+
+    def setup(self, username: str, password: str, client: str) -> str:
+        """First-launch password creation (desktop). Only once, only from this computer."""
+        if not self.setup_available(client):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "setup not available")
+        if len(password) < 12:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "password must be at least 12 characters")
+        h = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
+        self._local_path.parent.mkdir(parents=True, exist_ok=True)
+        self._local_path.write_text(json.dumps({"username": username, "hash": h}))
+        try:
+            os.chmod(self._local_path, 0o600)
+        except OSError:
+            pass
+        self._users[username] = (h, "admin")
+        return self.authenticate(username, password, client)
 
     @property
     def login_enabled(self) -> bool:

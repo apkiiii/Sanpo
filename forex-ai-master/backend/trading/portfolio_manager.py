@@ -52,6 +52,13 @@ class PeriodStats:
         d["net_realized"] = self.net_realized
         return d
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "PeriodStats":
+        fields = {k: d[k] for k in ("gross_pnl", "commissions", "swaps", "slippage_cost", "realized_profit",
+                                    "realized_loss") if k in d}
+        counts = {k: int(d[k]) for k in ("trades", "wins", "losses") if k in d}
+        return cls(datetime.fromisoformat(d["start"]), float(d["start_equity"]), **fields, **counts)
+
 
 @dataclass(slots=True)
 class SessionTarget:
@@ -74,6 +81,7 @@ class PortfolioManager:
     unrealized_profit: float = 0.0
     unrealized_loss: float = 0.0
     consecutive_losses: int = 0
+    net_deposits: float = 0.0  # demo deposits minus withdrawals (never counted as profit or loss)
     session: PeriodStats | None = None
     day: PeriodStats | None = None
     week: PeriodStats | None = None
@@ -130,6 +138,20 @@ class PortfolioManager:
         self.consecutive_losses = 0 if trade.net_pnl > 0 else self.consecutive_losses + 1
         return self.check_target(now)
 
+    def record_cash_flow(self, amount: float) -> None:
+        """Deposit (> 0) or withdrawal (< 0) of demo money.
+
+        Every equity reference is shifted by the same amount so that the cash movement is never seen as
+        profit, loss or drawdown (it does not move the daily/weekly loss limits nor the session target).
+        """
+        self.net_deposits += amount
+        self.balance += amount
+        self.equity += amount
+        for period in (self.session, self.day, self.week, self.all_time):
+            if period is not None:
+                period.start_equity += amount
+        self.peak_equity = max(self.peak_equity + amount, self.equity)
+
     def check_target(self, now: datetime | None = None) -> bool:
         assert self.session is not None
         if not self.target.enabled or self.target.reached or self.target.target <= 0:
@@ -167,6 +189,7 @@ class PortfolioManager:
             "unrealized_profit": self.unrealized_profit, "unrealized_loss": self.unrealized_loss,
             "unrealized_pnl": self.unrealized_profit + self.unrealized_loss,
             "consecutive_losses": self.consecutive_losses,
+            "initial_balance": self.initial_balance, "net_deposits": self.net_deposits,
             "session": self.session.to_dict(), "day": self.day.to_dict(), "week": self.week.to_dict(),
             "all_time": self.all_time.to_dict(),
             "target": {"target": self.target.target, "enabled": self.target.enabled, "reached": self.target.reached,
@@ -178,22 +201,22 @@ class PortfolioManager:
         return {"snapshot": self.snapshot(), "trade_ids": sorted(self.trade_ids)}
 
     def restore(self, state: dict[str, Any]) -> None:
-        """Restore peak equity, consecutive losses and target status after a restart."""
+        """Restore periods, peak equity, deposits, losses streak and target status after a restart.
+
+        Periods are restored as saved; the next :meth:`update_account` starts new ones if a session, day or
+        week boundary was crossed while the system was stopped.
+        """
         snap = state.get("snapshot", {})
         self.peak_equity = max(self.peak_equity, float(snap.get("peak_equity", 0.0)))
         self.consecutive_losses = int(snap.get("consecutive_losses", 0))
+        self.net_deposits = float(snap.get("net_deposits", 0.0))
+        self.initial_balance = float(snap.get("initial_balance", self.initial_balance))
         self.trade_ids |= set(state.get("trade_ids", []))
-        sess = snap.get("session") or {}
+        for name in ("session", "day", "week", "all_time"):
+            d = snap.get(name)
+            if d and "start" in d and "start_equity" in d:
+                setattr(self, name, PeriodStats.from_dict(d))
         tgt = snap.get("target") or {}
-        if self.session is not None and sess.get("start") == self.session.start.isoformat():
-            for k in ("gross_pnl", "commissions", "swaps", "slippage_cost", "realized_profit", "realized_loss",
-                      "trades", "wins", "losses", "start_equity"):
-                if k in sess:
-                    setattr(self.session, k, type(getattr(self.session, k))(sess[k]))
-            self.target.reached = bool(tgt.get("reached", False))
-        day = snap.get("day") or {}
-        if self.day is not None and day.get("start") == self.day.start.isoformat():
-            self.day.start_equity = float(day.get("start_equity", self.day.start_equity))
-        week = snap.get("week") or {}
-        if self.week is not None and week.get("start") == self.week.start.isoformat():
-            self.week.start_equity = float(week.get("start_equity", self.week.start_equity))
+        self.target.reached = bool(tgt.get("reached", False))
+        if tgt.get("reached_at"):
+            self.target.reached_at = datetime.fromisoformat(tgt["reached_at"])

@@ -17,6 +17,7 @@ place an order without a signed approval from the Risk Manager.
 
 from __future__ import annotations
 
+import threading
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -96,6 +97,7 @@ class MasterController:
                                   settings.block_when_calendar_unavailable)
         self.optimizer = optimizer or StrategyOptimizer(self.entry_tf)
         self._cycle_now: datetime | None = None
+        self._lock = threading.RLock()  # serialises trading cycles and account operations
         self.execution = ExecutionMonitor(broker, self._verify_approval, self._entries_hard_blocked,
                                           limits.max_spread_pips, limits.max_slippage_pips, policy,
                                           settings.account_currency, self._on_order_event, self._on_position_event)
@@ -299,7 +301,10 @@ class MasterController:
 
     # ================================================================ cycle
     def run_cycle(self, now: datetime | None = None) -> CycleReport:
-        now = now or utcnow()
+        with self._lock:
+            return self._run_cycle_locked(now or utcnow())
+
+    def _run_cycle_locked(self, now: datetime) -> CycleReport:
         self._cycle_now = now
         report = CycleReport(now, False)
         try:
@@ -444,6 +449,31 @@ class MasterController:
                 d.status, d.reasons = "execution_failed", [str(exc)]
                 self.alerts.send(AlertType.EXECUTION_ERROR, AlertLevel.WARNING, f"Execution failed {sym}", str(exc))
             self._record(d, report)
+
+    def cash_flow(self, amount: float, actor: str) -> dict[str, Any]:
+        """Deposit (> 0) or withdraw (< 0) fictitious money on the SIMULATION demo account.
+
+        Not available in DEMO/LIVE: real deposits and withdrawals are made at the broker.
+        """
+        if self._mode is not TradingMode.SIMULATION or not hasattr(self.broker, "deposit"):
+            raise ConfigurationError("fictitious deposits/withdrawals exist only in SIMULATION mode; "
+                                     "in DEMO/LIVE use your broker's account page")
+        if amount == 0:
+            raise ValueError("amount must not be zero")
+        with self._lock:
+            if amount > 0:
+                self.broker.deposit(amount)  # type: ignore[attr-defined]
+            else:
+                self.broker.withdraw(-amount)  # type: ignore[attr-defined]
+            self.portfolio.record_cash_flow(amount)
+            kind = "deposit" if amount > 0 else "withdrawal"
+            self.audit.record(actor, f"demo_{kind}", {"amount": abs(amount), "balance": self.portfolio.balance})
+            self.alerts.send(AlertType.SYSTEM, AlertLevel.INFO,
+                             f"Demo {'deposit' if amount > 0 else 'withdrawal'}: {abs(amount):,.2f}",
+                             f"new balance {self.portfolio.balance:,.2f} {self.settings.account_currency}")
+            self.store.save_state("portfolio", self.portfolio.to_state())
+            return {"balance": self.portfolio.balance, "equity": self.portfolio.equity,
+                    "net_deposits": self.portfolio.net_deposits}
 
     def _record(self, d: Decision, report: CycleReport) -> None:
         self.decisions.appendleft(d)

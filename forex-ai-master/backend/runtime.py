@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pandas as pd
@@ -39,6 +39,7 @@ from backend.trading.broker_interface import BrokerInterface
 from backend.trading.simulated_broker import SimulatedBroker
 
 log = get_logger(__name__)
+SYNTHETIC_START = datetime(2025, 1, 6, tzinfo=UTC)
 
 
 def build_alerts(settings: Settings) -> AlertManager:
@@ -76,6 +77,10 @@ class TradingRuntime:
         self.data = data
         self.calendar = calendar or (FileCalendarProvider(settings.economic_calendar_path)
                                      if settings.economic_calendar_path else NullCalendarProvider())
+        if repo is not None and isinstance(self.broker, SimulatedBroker):
+            saved_broker = repo.load_state("sim_broker")
+            if saved_broker:
+                self.broker.import_state(saved_broker)  # demo account survives restarts
         optimizer = StrategyOptimizer(Timeframe(settings.entry_timeframe))
         loaded = optimizer.load(settings.strategy_validation_path)
         self.master = MasterController(settings, self.broker, data, self.calendar, self.alerts, self.audit,
@@ -99,9 +104,10 @@ class TradingRuntime:
         if self.settings.simulation_data_source == "synthetic":
             self.synthetic = True
             # aligned on midnight UTC so that bars fall on the normal M5/M15/H1 grid
-            start = (utcnow() - timedelta(days=200)).replace(hour=0, minute=0, second=0, microsecond=0)
+            # fixed start so the generated market is identical at every launch (the demo can resume)
             for i, sym in enumerate(self.settings.symbols):
-                provider.add_frame(sym, generate_ohlc(sym, start, 40_000, Timeframe.M5, seed=100 + i))
+                provider.add_frame(sym, generate_ohlc(sym, SYNTHETIC_START, self.settings.synthetic_bars,
+                                                      Timeframe.M5, seed=100 + i))
         else:
             missing = [s for s in self.settings.symbols if s not in provider.symbols()]
             if missing:
@@ -114,6 +120,11 @@ class TradingRuntime:
             else max(starts) + timedelta(days=60)
         if begin >= min(ends):
             raise ConfigurationError("not enough history for the simulation warm-up (need > 60 days)")
+        saved = self.repo.load_state("replay") if self.repo is not None else None
+        if saved and saved.get("source") == self.settings.simulation_data_source:
+            resume = datetime.fromisoformat(saved["cursor"])
+            if begin <= resume < min(ends):
+                begin = resume  # continue where the previous run stopped
         self.replay_cursor = begin
         self._replay_end = min(ends)
         provider.cursor = begin
@@ -165,6 +176,7 @@ class TradingRuntime:
                 now = utcnow()
             await asyncio.to_thread(self.master.run_cycle, now)
             self.cycles += 1
+            self.persist()
             await self._broadcast({"type": "snapshot", "data": self.snapshot()})
             if simulation:
                 if self._advance_replay() is None:
@@ -173,6 +185,23 @@ class TradingRuntime:
                 await asyncio.sleep(self.settings.simulation_step_seconds)
             else:
                 await asyncio.sleep(self.settings.cycle_interval_seconds)
+
+    def persist(self) -> None:
+        """Save the demo account and replay position (SIMULATION only)."""
+        if self.repo is None or not isinstance(self.broker, SimulatedBroker):
+            return
+        try:
+            self.repo.save_state("sim_broker", self.broker.export_state())
+            if self.replay_cursor is not None:
+                self.repo.save_state("replay", {"cursor": self.replay_cursor.isoformat(),
+                                                "source": self.settings.simulation_data_source})
+        except Exception:  # noqa: BLE001
+            log.exception("demo state persistence failed")
+
+    def cash_flow(self, amount: float, actor: str) -> dict[str, Any]:
+        result = self.master.cash_flow(amount, actor)
+        self.persist()
+        return result
 
     # ------------------------------------------------------------------ dashboard
     def _on_alert(self, alert: Alert) -> None:
@@ -206,5 +235,6 @@ class TradingRuntime:
         st["synthetic_data"] = self.synthetic
         st["replay_time"] = self.replay_cursor.isoformat() if self.replay_cursor else None
         st["cycles"] = self.cycles
+        st["cash_history"] = self.broker.cash_history()[-20:] if isinstance(self.broker, SimulatedBroker) else []
         st["decisions"] = [d.to_dict() for d in list(self.master.decisions)[:50]]
         return st
