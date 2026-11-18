@@ -41,6 +41,7 @@ def main() -> int:
     ap.add_argument("--data-dir", default="data/historical")
     ap.add_argument("--target", type=float, default=1000.0, help="objectif de session (0 = désactivé)")
     ap.add_argument("--out", default="reports")
+    ap.add_argument("--snapshot", default="", help="écrit aussi l'état complet du système en JSON (pour une vue HTML)")
     args = ap.parse_args()
     configure_logging("ERROR")
 
@@ -61,13 +62,14 @@ def main() -> int:
     end = start + timedelta(days=args.days * 7 / 5)  # jours calendaires couvrant N jours ouvrés
     print(f"Compte démo fictif : {fmt(args.balance)} $ | {len(settings.symbols)} paires | "
           f"{args.days} jours | données {args.data.upper()}")
-    t0, cycles, equity_curve = time.time(), 0, []
+    t0, cycles, equity_curve, equity_times = time.time(), 0, [], []
     now = rt._advance_replay()
     while now is not None and now < end:
         if now.minute % 15 == 0 and is_market_open(now):  # analyse à chaque clôture M15
             m.run_cycle(now)
             cycles += 1
             equity_curve.append(m.portfolio.equity)
+            equity_times.append(now.isoformat())
             if cycles % 96 == 0:
                 print(f"  {now:%Y-%m-%d %H:%M}  equity {fmt(m.portfolio.equity)} $  "
                       f"trades {m.portfolio.all_time.trades}  ({time.time() - t0:.0f}s)")
@@ -135,6 +137,21 @@ def main() -> int:
     out.mkdir(exist_ok=True)
     path = out / f"demo_{datetime.now(UTC):%Y%m%d_%H%M%S}.md"
     path.write_text("\n".join(lines), encoding="utf-8")
+    if args.snapshot:
+        import json
+        snap = {
+            "generated_at": datetime.now(UTC).isoformat(), "synthetic": rt.synthetic, "balance_start": args.balance,
+            "period": [start.isoformat(), rt.replay_cursor.isoformat()],
+            "status": rt.snapshot(), "agents": m.agents_view(),
+            "decisions": [d.to_dict() for d in list(m.decisions)[:150]],
+            "decision_counts": dict(statuses), "rejection_reasons": dict(reasons.most_common(10)),
+            "risk_rejections": dict(m.risk_manager.rejection_counts),
+            "closed_trades": trades, "alerts": m.alerts.recent(200),
+            "equity": {"t": equity_times[::4], "v": [round(v, 2) for v in equity_curve[::4]]},
+            "audit": m.audit.tail(40), "audit_valid": m.audit.verify()[0],
+        }
+        Path(args.snapshot).write_text(json.dumps(snap, default=str), encoding="utf-8")
+        print(f"Snapshot : {args.snapshot}")
     print(f"\nBalance {fmt(args.balance)} $ -> {fmt(acct.balance)} $ | {len(pnl)} trades | "
           f"DD max {max_dd:.2f} % | risque max/trade {max(risks, default=0):.3f} %")
     print(f"Bilan : {path}")
