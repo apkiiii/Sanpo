@@ -82,6 +82,7 @@ class Settings(BaseSettings):
     live_min_demo_trades: int = Field(50, ge=1)
     critical_tests_report_path: str = "var/critical_tests.json"
     critical_tests_max_age_days: int = Field(7, ge=1)
+    live_approved_strategies: list[str] = Field(default_factory=list)  # explicit operator whitelist
 
     # --- Account / market ---------------------------------------------------
     account_currency: str = "USD"
@@ -117,6 +118,7 @@ class Settings(BaseSettings):
     target_reached_policy: TargetReachedPolicy = TargetReachedPolicy.BREAKEVEN
     session_start_utc: str = "07:00"  # London open
     session_end_utc: str = "21:00"  # New York close (approx.)
+    trade_only_in_session: bool = True
 
     # --- Safety -------------------------------------------------------------
     emergency_close_policy: EmergencyClosePolicy = EmergencyClosePolicy.KEEP_WITH_STOPS
@@ -162,6 +164,13 @@ class Settings(BaseSettings):
     def _split_csv(cls, value: object) -> object:
         if isinstance(value, str):
             return [item.strip().upper() for item in value.split(",") if item.strip()]
+        return value
+
+    @field_validator("live_approved_strategies", mode="before")
+    @classmethod
+    def _split_strategies(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [item.strip().lower() for item in value.split(",") if item.strip()]
         return value
 
     @field_validator("cors_origins", mode="before")

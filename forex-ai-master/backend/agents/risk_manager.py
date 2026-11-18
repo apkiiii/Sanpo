@@ -8,6 +8,7 @@ modified by the Master bot (there is no setter, and the object is immutable).
 from __future__ import annotations
 
 from collections import Counter
+from datetime import datetime
 
 from backend.agents.base import Agent, MarketContext
 from backend.analysis.indicators import atr
@@ -62,8 +63,8 @@ class RiskManager(Agent):
         self.decisions = self.decisions[-500:]
         return decision
 
-    def verify_approval(self, approval: RiskApproval | None) -> bool:
-        return approval is not None and self._engine.verify_approval(approval)
+    def verify_approval(self, approval: RiskApproval | None, now: datetime | None = None) -> bool:
+        return approval is not None and self._engine.verify_approval(approval, now)
 
     def _analyze(self, ctx: MarketContext) -> AgentReport:
         """Per-symbol pre-trade conditions (spread, volatility, global locks)."""

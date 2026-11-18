@@ -117,6 +117,7 @@ class PriceActionAnalyst(Agent):
         if err:
             return self._insufficient(ctx, err)
         setup, info = self.find_setup(ctx.symbol, ctx.candles[self.timeframe])
+        info["timeframe"] = self.timeframe.value
         if info["event"] == "CHOCH":
             info["warning"] = f"change of character ({info['event_direction']}): trend may be reversing"
         if setup is None:
