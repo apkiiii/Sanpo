@@ -1,0 +1,34 @@
+[project]
+name = "forex-ai-master"
+version = "0.1.0"
+description = "Multi-agent Forex trading system (7 agents + Master) with centralised risk management"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<0.116",
+    "uvicorn[standard]>=0.32,<0.33",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6,<3",
+    "sqlalchemy>=2.0.36,<2.1",
+    "alembic>=1.14,<2",
+    "psycopg[binary]>=3.2,<4",
+    "pandas>=2.2,<2.3",
+    "numpy>=2.0,<3",
+    "httpx>=0.27,<0.28",
+    "bcrypt>=4.2,<5",
+    "pyjwt>=2.9,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9", "pytest-asyncio>=0.24,<0.25"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "critical: tests that MUST pass before LIVE mode can be enabled",
+]
+filterwarnings = ["ignore::DeprecationWarning:passlib.*"]
+
+[tool.ruff]
+line-length = 120
