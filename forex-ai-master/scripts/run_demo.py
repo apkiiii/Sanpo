@@ -39,6 +39,8 @@ def main() -> int:
     ap.add_argument("--symbols", default="EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,USDCAD,NZDUSD")
     ap.add_argument("--data", choices=["synthetic", "csv"], default="synthetic")
     ap.add_argument("--data-dir", default="data/historical")
+    ap.add_argument("--min-units", type=float, default=1000.0,
+                    help="plus petite position acceptée par le broker, en unités (1000 = micro-lot, 1 chez certains brokers)")
     ap.add_argument("--target", type=float, default=1000.0, help="objectif de session (0 = désactivé)")
     ap.add_argument("--out", default="reports")
     ap.add_argument("--snapshot", default="", help="écrit aussi l'état complet du système en JSON (pour une vue HTML)")
@@ -49,6 +51,7 @@ def main() -> int:
         _env_file=None, trading_mode="simulation", initial_balance=args.balance,
         symbols=args.symbols, timeframes=["M15", "H1", "H4"], entry_timeframe="M15",
         simulation_data_source=args.data, historical_data_dir=args.data_dir, simulation_step_seconds=0,
+        min_trade_units=args.min_units, trade_units_step=min(args.min_units, 1000.0) if args.min_units >= 1000 else 1,
         target_session_profit=args.target, target_enabled=args.target > 0,
         # Pas de calendrier économique disponible en démo : explicitement autorisé en SIMULATION seulement.
         block_when_calendar_unavailable=False,
@@ -104,6 +107,7 @@ def main() -> int:
         f"- Somme fictive de départ : **{fmt(args.balance)} $**",
         f"- Période simulée : {start:%Y-%m-%d} → {rt.replay_cursor:%Y-%m-%d} ({args.days} jours ouvrés, {cycles} cycles M15)",
         f"- Paires : {', '.join(settings.symbols)}",
+        f"- Taille minimale de position : {args.min_units:,.0f} unité(s)",
         f"- Objectif de session : {fmt(args.target) + ' $' if args.target > 0 else 'désactivé'}",
         f"- Limites : {settings.risk_max_risk_per_trade_pct} %/trade, {settings.risk_max_daily_loss_pct} %/jour, "
         f"drawdown {settings.risk_max_drawdown_pct} %, {settings.risk_max_open_positions} positions max", "",

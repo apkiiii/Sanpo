@@ -7,7 +7,7 @@ position size is correct for XXX/USD, USD/XXX and cross pairs.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from backend.core.errors import ConfigurationError, DataError
 
@@ -56,13 +56,28 @@ MAJOR_PAIRS: tuple[str, ...] = ("EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD"
 
 INSTRUMENTS: dict[str, InstrumentSpec] = {s: _spec(s) for s in MAJOR_PAIRS}
 
+_SIZE_RULES = {"min_units": 1_000.0, "units_step": 1_000.0}
+
+
+def configure_trade_sizes(min_units: float, units_step: float) -> None:
+    """Set the smallest tradable size and the size increment (in units) for all instruments.
+
+    Must match what the broker accepts: 1,000 = micro lot (most brokers); some brokers accept 1 unit.
+    Called once at start-up from the configuration.
+    """
+    if units_step < 1 or min_units < units_step or (min_units / units_step) % 1:
+        raise ConfigurationError("MIN_TRADE_UNITS must be a multiple of TRADE_UNITS_STEP, both >= 1")
+    _SIZE_RULES.update(min_units=float(min_units), units_step=float(units_step))
+    for sym, spec in list(INSTRUMENTS.items()):
+        INSTRUMENTS[sym] = replace(spec, min_units=float(min_units), units_step=float(units_step))
+
 
 def get_instrument(symbol: str) -> InstrumentSpec:
     """Return the specification of ``symbol`` (e.g. ``EURUSD``)."""
     symbol = normalize_symbol(symbol)
     if symbol not in INSTRUMENTS:
         if len(symbol) == 6 and symbol.isalpha():
-            INSTRUMENTS[symbol] = _spec(symbol)
+            INSTRUMENTS[symbol] = replace(_spec(symbol), **_SIZE_RULES)
         else:
             raise ConfigurationError(f"unknown instrument: {symbol}")
     return INSTRUMENTS[symbol]

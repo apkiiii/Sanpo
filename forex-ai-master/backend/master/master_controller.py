@@ -36,6 +36,7 @@ from backend.alerts.manager import AlertLevel, AlertManager, AlertType
 from backend.analysis.indicators import atr
 from backend.config.settings import EmergencyClosePolicy, Settings, TargetReachedPolicy, TradingMode
 from backend.core.errors import BrokerConnectionError, ConfigurationError, ForexAIError, LiveModeNotAllowedError
+from backend.core.instruments import configure_trade_sizes
 from backend.core.logging import get_logger
 from backend.core.market_hours import in_trading_session, is_market_open
 from backend.core.types import AgentReport, ClosedTrade, Direction, OrderStatus, Quote, Timeframe, TradeProposal, utcnow
@@ -81,6 +82,7 @@ class MasterController:
         self.audit = audit or AuditLog()
         self.store: StateStore = store or InMemoryStateStore()
         self._check_mode()
+        configure_trade_sizes(settings.min_trade_units, settings.trade_units_step)
 
         self.entry_tf = Timeframe(settings.entry_timeframe)
         self.timeframes = [Timeframe(t) for t in settings.timeframes]

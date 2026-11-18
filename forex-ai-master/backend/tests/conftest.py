@@ -67,3 +67,12 @@ def broker() -> SimulatedBroker:
     for sym, mid in MIDS.items():
         b.set_mid(sym, mid, 0.8 if not sym.endswith("JPY") else 1.0, NOW)
     return b
+
+
+@pytest.fixture(autouse=True)
+def _default_trade_sizes():  # type: ignore[no-untyped-def]
+    """Trade-size rules are process-wide configuration: reset them around every test."""
+    from backend.core.instruments import configure_trade_sizes
+    configure_trade_sizes(1_000, 1_000)
+    yield
+    configure_trade_sizes(1_000, 1_000)

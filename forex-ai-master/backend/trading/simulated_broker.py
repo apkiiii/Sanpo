@@ -197,7 +197,7 @@ class SimulatedBroker(BrokerInterface):
             if q is None:
                 raise OrderRejectedError(f"no price for {symbol}")
             spec = get_instrument(symbol)
-            if request.units < spec.min_units or request.units % spec.units_step:
+            if request.units < spec.min_units or (request.units / spec.units_step) % 1 > 1e-9:
                 raise OrderRejectedError("invalid units")
             d = Direction.LONG if request.side is OrderSide.BUY else Direction.SHORT
             slip = (abs(self._rng.normal(0, self.config.slippage_pips)) + self.faults.extra_slippage_pips) * spec.pip_size

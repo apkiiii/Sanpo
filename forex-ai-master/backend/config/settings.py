@@ -92,6 +92,9 @@ class Settings(BaseSettings):
     )
     timeframes: list[str] = Field(default_factory=lambda: ["M5", "M15", "M30", "H1", "H4"])
     entry_timeframe: str = "M15"
+    # Smallest position and size increment accepted by the broker, in units (1,000 = micro lot).
+    min_trade_units: float = Field(1_000.0, ge=1)
+    trade_units_step: float = Field(1_000.0, ge=1)
     cycle_interval_seconds: int = Field(30, ge=1)
 
     # --- Risk (each value overridable through RISK_* variables) ------------

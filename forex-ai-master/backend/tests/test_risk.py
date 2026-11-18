@@ -228,3 +228,19 @@ def test_reward_risk_rechecked_at_current_price(engine: RiskEngine) -> None:
     s = TradeSetup("EURUSD", Direction.LONG, 1.0990, 1.0960, 1.1050, 1.0960, "t", "M15", 0.6)
     d = engine.evaluate(make_proposal(s), make_state())
     assert not d.checks["reward_risk"][0]
+
+
+def test_small_account_with_unit_sizing() -> None:
+    """40 $ account: refused with micro lots, tradable at 0.25 % when the broker accepts 1-unit sizes."""
+    from backend.core.instruments import configure_trade_sizes
+    from backend.core.errors import ConfigurationError
+    from backend.config.settings import RiskLimits
+    engine = RiskEngine(RiskLimits())
+    st = make_state(balance=40.0)
+    assert not engine.evaluate(make_proposal(), st).approved  # 1,000-unit minimum: too big
+    configure_trade_sizes(1, 1)
+    d = engine.evaluate(make_proposal(), make_state(balance=40.0))
+    assert d.approved, d.reasons
+    assert 0 < d.units < 100 and d.risk_amount <= 40 * 0.0025 + 1e-9
+    with pytest.raises(ConfigurationError):
+        configure_trade_sizes(10, 3)
