@@ -197,7 +197,10 @@ class BacktestEngine:
                 allowed = is_market_open(times[i]) and not (times[i].weekday() == 4 and times[i].hour >= 20) \
                     and not (times[i].weekday() == 6 and times[i].hour == 22)
                 day_loss_pct = (day_start_balance - balance) / day_start_balance * 100
-                if day_loss_pct >= cfg.daily_loss_limit_pct:
+                # same rule as the live Risk Manager: current loss + this trade's risk must fit in the limit
+                if day_loss_pct + cfg.risk_pct > cfg.daily_loss_limit_pct + 1e-9:
+                    allowed = False
+                if (peak - balance) / peak * 100 + cfg.risk_pct > cfg.max_drawdown_pct + 1e-9:
                     allowed = False
                 if allowed and rng.random() < cfg.reject_probability:
                     rejected += 1
