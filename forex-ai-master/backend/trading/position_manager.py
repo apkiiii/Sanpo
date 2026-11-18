@@ -222,7 +222,8 @@ class PositionManager:
                         rep.fixed.append(f"{pid}: stop-loss restored")
                 except BrokerConnectionError:
                     pass
-            elif bp.stop_loss is not None and lp.stop_loss is not None and abs(bp.stop_loss - lp.stop_loss) > 1e-9:
+            elif bp.stop_loss is not None and lp.stop_loss is not None and \
+                    abs(bp.stop_loss - lp.stop_loss) > 0.5 * 10 ** -get_instrument(lp.symbol).price_precision:
                 # Adopt the broker's stop only if it is tighter; otherwise restore ours.
                 tighter = (bp.stop_loss - lp.stop_loss) * lp.direction.sign > 0
                 if tighter:

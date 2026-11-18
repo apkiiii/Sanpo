@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 from backend.core.errors import DataError, InsufficientDataError
-from backend.core.instruments import normalize_symbol
+from backend.core.instruments import get_instrument, normalize_symbol
 from backend.core.types import Quote, Timeframe
 
 if TYPE_CHECKING:
@@ -192,16 +192,25 @@ class CSVMarketDataProvider:
 
     def get_quote(self, symbol: str) -> Quote:
         symbol = normalize_symbol(symbol)
-        base = self._base(symbol)
+        bar = self.last_closed_bar(symbol)
+        mid = float(bar["close"])
+        half = self.spread_pips.get(symbol, 1.0) * get_instrument(symbol).pip_size / 2
+        return Quote(symbol, mid - half, mid + half, self.cursor or bar.name.to_pydatetime())
+
+    def last_closed_bar(self, symbol: str) -> pd.Series:
+        """Last base bar fully closed at the cursor (a bar starting exactly at the cursor is still forming)."""
+        base = self._base(normalize_symbol(symbol))
         if self.cursor is not None:
-            base = base.loc[: self.cursor]
+            base = base[base.index < self.cursor]
         if len(base) == 0:
             raise InsufficientDataError(f"no price for {symbol}")
-        from backend.core.instruments import get_instrument
+        return base.iloc[-1]
 
-        mid = float(base["close"].iloc[-1])
-        half = self.spread_pips.get(symbol, 1.0) * get_instrument(symbol).pip_size / 2
-        return Quote(symbol, mid - half, mid + half, base.index[-1].to_pydatetime())
+    def bar_path(self, symbol: str) -> list[float]:
+        """Plausible intrabar price path of the last closed bar: open, then the nearer extreme, then close."""
+        b = self.last_closed_bar(symbol)
+        o, h, l, c = float(b["open"]), float(b["high"]), float(b["low"]), float(b["close"])
+        return [o, l, h, c] if c >= o else [o, h, l, c]
 
     def symbols(self) -> list[str]:
         return sorted(set(self._frames) | {p.name.split("_")[0] for p in self.data_dir.glob("*_*.csv")})

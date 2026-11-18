@@ -52,11 +52,13 @@ class ExecutionMonitor(Agent):
         s = proposal.setup
         fill = order.result.fill_price
         units = order.result.filled_units
-        risk = price_move_value(s.symbol, abs(fill - s.stop_loss), units, self.account_ccy, mid_prices)
-        reward = price_move_value(s.symbol, abs(s.take_profit - fill), units, self.account_ccy, mid_prices)
+        stop = order.request.stop_loss  # exactly what the broker holds (rounded towards the position)
+        tp = order.request.take_profit if order.request.take_profit is not None else s.take_profit
+        risk = price_move_value(s.symbol, abs(fill - stop), units, self.account_ccy, mid_prices)
+        reward = price_move_value(s.symbol, abs(tp - fill), units, self.account_ccy, mid_prices)
         self.positions.register(ManagedPosition(
-            order.result.position_id or "", s.symbol, s.direction, units, fill, s.stop_loss, s.take_profit,
-            s.stop_loss, risk, reward, reward / risk if risk > 0 else 0.0, order.result.time,
+            order.result.position_id or "", s.symbol, s.direction, units, fill, stop, tp,
+            stop, risk, reward, reward / risk if risk > 0 else 0.0, order.result.time,
             entry_reason=s.rationale, strategy=s.strategy, validated_by=proposal.supporting_agents,
             invalidation=s.invalidation, client_order_id=order.client_order_id))
 

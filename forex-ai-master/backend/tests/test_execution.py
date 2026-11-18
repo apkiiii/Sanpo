@@ -287,3 +287,26 @@ def test_realised_risk_never_exceeds_limit_even_with_max_slippage(engine: RiskEn
     pos = broker.get_positions()[0]
     realised_risk = (pos.entry_price - pos.stop_loss) * pos.units  # EURUSD: quote = USD
     assert realised_risk <= 100_000 * 0.0025 + 1e-6
+
+
+def test_stop_rounding_never_widens_and_matches_broker(engine: RiskEngine, broker: SimulatedBroker) -> None:
+    from backend.core.instruments import get_instrument
+    spec = get_instrument("EURUSD")
+    assert spec.round_stop(1.0979949, 1) == 1.09800 and spec.round_stop(1.1020051, -1) == 1.10200
+    assert spec.round_stop(1.09800, 1) == 1.09800  # already on the grid: unchanged
+    for direction in (Direction.LONG, Direction.SHORT):
+        q = broker.get_quote("EURUSD")
+        entry = q.ask if direction is Direction.LONG else q.bid
+        setup = replace(make_setup(entry=entry, direction=direction, stop_pips=20),
+                        stop_loss=entry - direction.sign * 0.00200437)  # off-grid stop
+        proposal = make_proposal(setup)
+        decision = engine.evaluate(proposal, make_state())
+        order = om(engine, broker).submit(proposal, decision)
+        assert order.status is OrderStatus.FILLED
+        sent = order.request.stop_loss
+        assert (sent - setup.stop_loss) * direction.sign >= 0  # tighter or equal, never wider
+        broker._positions[order.result.position_id].pos.symbol  # exists
+    from backend.trading.position_manager import PositionManager as PM
+    pm = PM(broker)
+    rep = pm.reconcile()
+    assert not rep.mismatches

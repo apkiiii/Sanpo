@@ -6,6 +6,7 @@ position size is correct for XXX/USD, USD/XXX and cross pairs.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from backend.core.errors import ConfigurationError, DataError
@@ -30,6 +31,13 @@ class InstrumentSpec:
 
     def round_price(self, price: float) -> float:
         return round(price, self.price_precision)
+
+    def round_stop(self, price: float, direction_sign: int) -> float:
+        """Round a stop-loss to the price precision *towards the position* (it can only get tighter)."""
+        f = 10 ** self.price_precision
+        if direction_sign > 0:  # long: stop below entry -> round up
+            return math.ceil(price * f - 1e-6) / f
+        return math.floor(price * f + 1e-6) / f
 
 
 def _spec(symbol: str) -> InstrumentSpec:

@@ -98,7 +98,8 @@ class TradingRuntime:
         provider = CSVMarketDataProvider(self.settings.historical_data_dir, DEFAULT_SPREADS)
         if self.settings.simulation_data_source == "synthetic":
             self.synthetic = True
-            start = utcnow() - timedelta(days=200)
+            # aligned on midnight UTC so that bars fall on the normal M5/M15/H1 grid
+            start = (utcnow() - timedelta(days=200)).replace(hour=0, minute=0, second=0, microsecond=0)
             for i, sym in enumerate(self.settings.symbols):
                 provider.add_frame(sym, generate_ohlc(sym, start, 40_000, Timeframe.M5, seed=100 + i))
         else:
@@ -130,9 +131,10 @@ class TradingRuntime:
         self.data.cursor = nxt
         self.broker.clock = nxt
         for sym in self.settings.symbols:
-            q = self.data.get_quote(sym)
-            spread = DEFAULT_SPREADS.get(sym, 1.5) * get_instrument(sym).pip_size
-            self.broker.set_quote(sym, q.mid - spread / 2, q.mid + spread / 2, nxt)
+            half = DEFAULT_SPREADS.get(sym, 1.5) * get_instrument(sym).pip_size / 2
+            # replay the bar's intrabar path so stops/targets hit by a wick are triggered
+            for mid in self.data.bar_path(sym):
+                self.broker.set_quote(sym, mid - half, mid + half, nxt)
         return nxt
 
     # ------------------------------------------------------------------ loop

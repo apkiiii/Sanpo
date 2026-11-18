@@ -114,7 +114,8 @@ class OrderManager:
         max_price = ref + s.direction.sign * self.max_slippage_pips * spec.pip_size
 
         request = OrderRequest(cid, s.symbol, OrderSide.BUY if s.direction is Direction.LONG else OrderSide.SELL,
-                               approval.units, spec.round_price(s.stop_loss), spec.round_price(s.take_profit),
+                               approval.units, spec.round_stop(s.stop_loss, s.direction.sign),
+                               spec.round_price(s.take_profit),
                                max_price, comment=s.strategy)
         order = ManagedOrder(cid, proposal, request, reference_price=ref)
         self.orders[cid] = order

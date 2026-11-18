@@ -67,6 +67,12 @@ automatique DEMO → LIVE ; aucune API pour changer de mode. Tests : `test_secur
 2. Le dimensionnement utilisait l'entrée planifiée : après une dérive défavorable, le risque réel dépassait 0,25 % → dimensionnement au prix exécutable + slippage max.
 3. L'OrderManager mesurait le slippage par rapport à l'entrée planifiée, ce qui rejetait des trades approuvés → mesuré par rapport au prix exécutable.
 4. L'expiration des approbations utilisait l'horloge murale, incompatible avec le rejeu → horloge du cycle.
+5. Look-ahead dans le rejeu : la cotation à l'instant *t* utilisait la clôture de la bougie qui commençait à *t* → seule la dernière bougie clôturée est utilisée.
+6. L'arrondi du stop envoyé au broker pouvait l'élargir d'une fraction de pip → arrondi toujours vers la position, valeur locale identique à celle du broker.
+
+Note : un stop-loss standard est exécuté au marché. Lors d'un mouvement rapide ou d'un gap, la perte réelle peut
+dépasser légèrement le risque prévu (observé en démo : −291 $ pour 248 $ prévus). Pour supprimer ce risque,
+utiliser des stops garantis si le broker en propose.
 
 ## 7. Risques résiduels et recommandations
 

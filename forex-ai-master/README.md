@@ -37,7 +37,7 @@ idempotent gère les positions. Un tableau de bord (React) permet de tout suivre
 | Docker Compose | `docker-compose.yml`, `docker/` | ⚠️ configuration validée, images non construites (pas de démon Docker ici) |
 | Connecteur broker réel | — | ❌ volontairement absent : broker non choisi |
 
-**Tests : 178** (177 + 1 test d'intégration PostgreSQL activé par variable d'environnement), dont **123 critiques**
+**Tests : 181** (180 + 1 test d'intégration PostgreSQL activé par variable d'environnement), dont **123 critiques**
 (`pytest -m critical`) qui conditionnent l'activation du mode LIVE.
 
 ## Démarrage rapide (simulation)
@@ -55,6 +55,18 @@ python scripts/hash_password.py          # -> DASHBOARD_ADMIN_PASSWORD_HASH (ent
 SIMULATION_DATA_SOURCE=synthetic uvicorn --factory backend.main:get_app --port 8000
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
+
+### Compte démo fictif (entraînement complet, aucun argent réel)
+
+```bash
+python scripts/run_demo.py                          # 100 000 $ fictifs, 10 jours de marché simulé
+python scripts/run_demo.py --balance 10000 --days 20 --target 0
+python scripts/run_demo.py --data csv --days 60     # sur vos données historiques réelles
+```
+
+Le script fait tourner les 7 bots, le Bot Maître, le Risk Manager et l'exécution sur le broker simulé, puis écrit un
+bilan dans `reports/` (exemple : [docs/reports/demo_example.md](docs/reports/demo_example.md)). Sur données
+synthétiques, le bilan valide le fonctionnement du système, pas sa rentabilité.
 
 Pour une simulation sérieuse, placez des données historiques vérifiées dans `data/historical/`
 (format : [data/historical/README.md](data/historical/README.md)), lancez `python scripts/run_backtest.py`, puis
