@@ -48,10 +48,11 @@ Filename: "{app}\{#AppExe}"; Description: "Lancer {#AppName}"; Flags: nowait pos
 ; automatic update from inside the application: reopen it once the files are replaced
 Filename: "{app}\{#AppExe}"; Flags: nowait; Check: IsRelaunch
 
+; The demo account and settings live in %APPDATA%\ForexAIMaster and are kept on uninstall.
+
 [Code]
 function IsRelaunch: Boolean;
 begin
   Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
 end;
 
-; The demo account and settings live in %APPDATA%\ForexAIMaster and are kept on uninstall.
