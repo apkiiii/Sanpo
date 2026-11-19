@@ -103,7 +103,10 @@ class SimulatedBroker(BrokerInterface):
             raise BrokerConnectionError("simulated network failure")
 
     def _mids(self) -> dict[str, float]:
-        return {s: q.mid for s, q in self._quotes.items()}
+        # Entry prices stand in for symbols without a quote yet (e.g. just after a restart).
+        mids = {sp.pos.symbol: sp.pos.entry_price for sp in self._positions.values()}
+        mids.update({s: q.mid for s, q in self._quotes.items()})
+        return mids
 
     def set_quote(self, symbol: str, bid: float, ask: float, time: datetime | None = None) -> None:
         """Push a new price (simulation feed) and process stops/targets."""

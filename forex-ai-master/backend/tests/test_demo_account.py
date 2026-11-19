@@ -147,3 +147,53 @@ def test_dashboard_served_with_its_own_csp(tmp_path: Path, monkeypatch: pytest.M
         assert r.status_code == 200 and "Forex AI Master" in r.text
         assert "default-src 'self'" in r.headers["content-security-policy"]
         assert c.get("/api/health").headers["content-security-policy"].startswith("default-src 'none'")
+
+
+def test_account_works_right_after_restart_without_quotes(broker: SimulatedBroker) -> None:
+    """Regression: a restored demo account with open positions crashed until new prices arrived."""
+    q = broker.get_quote("GBPUSD")
+    broker.place_order(OrderRequest(new_id("C"), "GBPUSD", OrderSide.BUY, 1000, q.bid - 0.003, None))
+    restored = SimulatedBroker()
+    restored.import_state(broker.export_state())
+    restored.connect()
+    acct = restored.get_account()  # no quote pushed yet
+    assert acct.margin_used > 0 and acct.balance == pytest.approx(broker.get_account().balance)
+
+
+def test_stale_open_record_is_cleaned_for_good(tmp_path: Path) -> None:
+    """Regression: a position recorded 'open' in the database but absent at the broker came back at every start."""
+    s = _settings(tmp_path)
+    repo = Repository(s.database_url, create_schema=True)
+    repo.save_position({"trade_id": "POS-ghost", "symbol": "EURUSD", "direction": "long", "units": 10.0,
+                        "entry_price": 1.1, "stop_loss": 1.09, "take_profit": 1.12, "initial_stop": 1.09,
+                        "initial_risk": 0.1, "entry_time": "2025-03-01T10:00:00+00:00", "status": "open",
+                        "mode": "simulation"})
+
+    async def start_stop(rt: TradingRuntime) -> None:
+        await rt.start()
+        await rt.stop()
+
+    rt = TradingRuntime(s, repo)
+    assert any(p.trade_id == "POS-ghost" for p in rt.master.execution.positions.open_positions())
+    asyncio.run(start_stop(rt))  # start-up sync reconciles even though the simulation is paused
+    assert not rt.master.execution.positions.open_positions()
+    assert not Repository(s.database_url).load_open_positions()  # gone for good
+    rt2 = TradingRuntime(s, Repository(s.database_url))
+    assert not rt2.master.execution.positions.open_positions()
+
+
+def test_stop_waits_for_running_cycle_and_saves(tmp_path: Path) -> None:
+    s = _settings(tmp_path, simulation_autostart=True)
+    repo = Repository(s.database_url, create_schema=True)
+    rt = TradingRuntime(s, repo)
+
+    async def run() -> None:
+        await rt.start()
+        while rt.cycles < 2:
+            await asyncio.sleep(0.01)
+        await rt.stop()
+
+    asyncio.run(run())
+    saved = repo.load_state("replay")
+    assert saved and saved["cursor"] == rt.replay_cursor.isoformat()
+    assert repo.load_state("sim_broker") is not None

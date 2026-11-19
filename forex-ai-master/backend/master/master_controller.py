@@ -450,6 +450,29 @@ class MasterController:
                 self.alerts.send(AlertType.EXECUTION_ERROR, AlertLevel.WARNING, f"Execution failed {sym}", str(exc))
             self._record(d, report)
 
+    def sync(self, now: datetime | None = None) -> CycleReport:
+        """Connectivity, reconciliation and account update only: no analysis, no new trade.
+
+        Used at start-up (even when the simulation is paused) so the dashboard never shows stale positions.
+        """
+        now = now or utcnow()
+        report = CycleReport(now, False)
+        with self._lock:
+            self._cycle_now = now
+            try:
+                if not self.broker.is_connected():
+                    self.broker.connect()
+                rep = self.execution.reconcile()
+                for t in rep.closed_trades:
+                    self._on_closed_trade(t, now)
+                acct = self.broker.get_account()
+                self.portfolio.update_account(acct, [p.unrealized_pnl for p in self.broker.get_positions()], now)
+            except Exception as exc:  # noqa: BLE001
+                log.exception("start-up sync failed")
+                report.errors.append(f"{type(exc).__name__}: {exc}")
+            self.store.save_state("portfolio", self.portfolio.to_state())
+        return report
+
     def cash_flow(self, amount: float, actor: str) -> dict[str, Any]:
         """Deposit (> 0) or withdraw (< 0) fictitious money on the SIMULATION demo account.
 

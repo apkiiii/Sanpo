@@ -163,22 +163,35 @@ class TradingRuntime:
             self.alerts.send(AlertType.BROKER_DISCONNECTED, AlertLevel.CRITICAL, "Broker connection failed", str(exc))
         if self.replay_cursor is not None:
             self._advance_replay()
+        # reconcile the restored state with the broker right away (also when the simulation is paused)
+        await asyncio.to_thread(self.master.sync, self.replay_cursor)
+        self.persist()
         self._stop.clear()
         self._task = asyncio.create_task(self._loop(), name="trading-loop")
 
     async def stop(self) -> None:
+        """Graceful stop: let the running cycle finish, then save everything."""
         self._stop.set()
         if self._task is not None:
-            self._task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._task
+            try:
+                await asyncio.wait_for(asyncio.shield(self._task), timeout=20)
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                self._task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._task
+        self.persist()
         self.audit.record("system", "shutdown", {"cycles": self.cycles})
+
+    async def _pause(self, seconds: float) -> None:
+        """Sleep that ends early when a stop is requested."""
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(self._stop.wait(), timeout=seconds)
 
     async def _loop(self) -> None:
         simulation = self.settings.trading_mode is TradingMode.SIMULATION
         while not self._stop.is_set():
             if simulation and not self.running:  # paused: the simulated market does not move
-                await asyncio.sleep(0.25)
+                await self._pause(0.25)
                 continue
             if simulation:
                 now = self.replay_cursor or utcnow()
@@ -192,9 +205,9 @@ class TradingRuntime:
                 if self._advance_replay() is None:
                     self.alerts.send(AlertType.SYSTEM, AlertLevel.INFO, "Replay finished", "End of historical data.")
                     return
-                await asyncio.sleep(self.step_seconds)
+                await self._pause(self.step_seconds)
             else:
-                await asyncio.sleep(self.settings.cycle_interval_seconds)
+                await self._pause(self.settings.cycle_interval_seconds)
 
     def persist(self) -> None:
         """Save the demo account and replay position (SIMULATION only)."""

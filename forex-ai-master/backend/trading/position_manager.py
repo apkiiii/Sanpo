@@ -251,6 +251,9 @@ class PositionManager:
                 else:
                     rep.missing_at_broker.append(pid)
                     lp.notes.append("closed at broker but no transaction found")
+                    lp.exit_reason = lp.exit_reason or "missing_at_broker"
+                    # persist the closure too, otherwise the stale record would come back at every restart
+                    self._on_event("position_closed", {**lp.to_dict(), "net_pnl": None, "exit_price": None})
                 self.closed.append(lp)
                 del self.positions[pid]
         return rep
