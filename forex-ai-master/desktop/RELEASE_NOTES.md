@@ -1,13 +1,22 @@
 ## Forex AI Master — application Windows (compte démo)
 
-**Télécharger :** `ForexAIMaster.exe` ci-dessous, puis double-cliquer.
+### Installer (recommandé)
+Télécharger **ForexAIMaster-Setup.exe** ci-dessous et l'ouvrir : installation en quelques secondes,
+sans droits administrateur. Une icône **Forex AI Master** est ajoutée au Bureau et au menu Démarrer.
+Désinstallation : Paramètres Windows › Applications › Forex AI Master.
 
+### Version portable
+**ForexAIMaster.exe** : se lance directement, sans installation.
+
+### À savoir
+- Le logiciel s'ouvre dans sa propre fenêtre (moteur Microsoft Edge WebView2, présent sur Windows 10/11).
 - Mode **simulation uniquement** : argent fictif, aucun ordre réel ne peut être envoyé.
 - Compte démo de départ : 40 $ fictifs ; boutons **Déposer** / **Retirer** dans « Vue générale ».
 - Au premier lancement : choisir un identifiant et un mot de passe (12 caractères minimum).
-- Windows peut afficher « Windows a protégé votre ordinateur » (fichier non signé) :
-  « Informations complémentaires » → « Exécuter quand même ».
-- Réglages et données : `%APPDATA%\ForexAIMaster` (voir LISEZMOI.txt).
+- Fichiers non signés : Windows peut afficher « Windows a protégé votre ordinateur » ›
+  « Informations complémentaires » › « Exécuter quand même ».
+- Réglages et données : `%APPDATA%\ForexAIMaster` (conservés en cas de désinstallation).
 
-Avant publication, ce build a passé toute la suite de tests sous Windows et l'auto-contrôle de l'exécutable.
-Les résultats affichés portent sur un marché simulé et n'ont aucune valeur prédictive.
+Avant publication, ce build a passé toute la suite de tests sous Windows, l'auto-contrôle de l'application
+et un test d'installation silencieuse. Les résultats affichés portent sur un marché simulé et n'ont aucune
+valeur prédictive.

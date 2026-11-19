@@ -7,15 +7,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # publish the .exe as a GitHub Release (direct download link)
+  contents: write  # publish the application as a GitHub Release (direct download links)
 
 jobs:
-  windows-exe:
+  windows-app:
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: forex-ai-master
+        shell: pwsh
     steps:
       - uses: actions/checkout@v4
 
@@ -36,42 +37,82 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt "pyinstaller==6.22.3" "pyinstaller-hooks-contrib==2026.10"
+          pip install -r requirements-dev.txt -r desktop/requirements-desktop.txt
 
       - name: Run the test suite on Windows
         run: python -m pytest -q
 
-      - name: Build ForexAIMaster.exe
+      - name: Build the application (PyInstaller)
         run: pyinstaller --noconfirm desktop/forex_ai_master.spec
 
-      - name: Smoke test the executable
-        shell: pwsh
+      - name: Self-check of the portable executable
         run: |
           $env:APPDATA = "$env:RUNNER_TEMP\appdata"
           New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
-          .\dist\ForexAIMaster.exe --check
-          if ($LASTEXITCODE -ne 0) { throw "executable self-check failed" }
+          $p = Start-Process -FilePath "dist\ForexAIMaster.exe" -ArgumentList "--check" -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "self-check timed out" }
+          Get-Content "$env:APPDATA\ForexAIMaster\forex_ai_master.log" -Tail 20
+          if ($p.ExitCode -ne 0) { throw "self-check failed ($($p.ExitCode))" }
+
+      - name: Open the application window (WebView2) and check its content
+        id: gui
+        continue-on-error: true
+        run: |
+          $env:APPDATA = "$env:RUNNER_TEMP\appdata"
+          $out = "$env:RUNNER_TEMP\gui.json"
+          $p = Start-Process -FilePath "dist\ForexAIMaster\ForexAIMaster.exe" -ArgumentList "--smoke-gui `"$out`"" -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "window test timed out" }
+          Get-Content "$env:APPDATA\ForexAIMaster\forex_ai_master.log" -Tail 20
+          if (Test-Path $out) { Get-Content $out }
+          if ($p.ExitCode -ne 0) { throw "window test failed ($($p.ExitCode))" }
+
+      - name: Build the installer (Inno Setup)
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y | Out-Null }
+          & $iscc desktop\installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "installer build failed" }
+
+      - name: Test the installer (silent install, shortcuts, launch)
+        run: |
+          $p = Start-Process -FilePath "dist\ForexAIMaster-Setup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /TASKS=desktopicon" -PassThru
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); throw "installer timed out" }
+          $app = "$env:LOCALAPPDATA\Programs\Forex AI Master\ForexAIMaster.exe"
+          $desk = Join-Path ([Environment]::GetFolderPath('Desktop')) "Forex AI Master.lnk"
+          if (-not (Test-Path $app)) { throw "application not installed" }
+          if (-not (Test-Path $desk)) { throw "desktop shortcut missing" }
+          Write-Host "Installed: $app"; Write-Host "Shortcut: $desk"
+          $env:APPDATA = "$env:RUNNER_TEMP\appdata2"
+          New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
+          $c = Start-Process -FilePath $app -ArgumentList "--check" -PassThru
+          if (-not $c.WaitForExit(180000)) { $c.Kill(); throw "installed app check timed out" }
+          if ($c.ExitCode -ne 0) { throw "installed app check failed" }
+
+      - name: Package
+        run: |
           Copy-Item desktop\LISEZMOI.txt dist\
-          Get-FileHash dist\ForexAIMaster.exe -Algorithm SHA256 | Format-List | Out-File dist\SHA256.txt
+          Get-FileHash dist\ForexAIMaster-Setup.exe, dist\ForexAIMaster.exe -Algorithm SHA256 | Format-List | Out-File dist\SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: ForexAIMaster-windows
           path: |
+            forex-ai-master/dist/ForexAIMaster-Setup.exe
             forex-ai-master/dist/ForexAIMaster.exe
             forex-ai-master/dist/LISEZMOI.txt
             forex-ai-master/dist/SHA256.txt
           retention-days: 30
 
-      - name: Publish as a GitHub Release (direct download link)
-        shell: pwsh
+      - name: Publish as a GitHub Release (direct download links)
         env:
           GH_TOKEN: ${{ github.token }}
+          GUI_OUTCOME: ${{ steps.gui.outcome }}
         run: |
           $tag = "forex-ai-master-windows"
           gh release delete $tag --cleanup-tag --yes 2>$null
           $global:LASTEXITCODE = 0
-          gh release create $tag dist/ForexAIMaster.exe dist/LISEZMOI.txt dist/SHA256.txt `
+          Add-Content desktop/RELEASE_NOTES.md "`n_Contrôle automatique de la fenêtre de l'application sur Windows : $env:GUI_OUTCOME._"
+          gh release create $tag dist/ForexAIMaster-Setup.exe dist/ForexAIMaster.exe dist/LISEZMOI.txt dist/SHA256.txt `
             --target $env:GITHUB_SHA --title "Forex AI Master - Windows (compte démo)" `
             --notes-file desktop/RELEASE_NOTES.md --prerelease
           if ($LASTEXITCODE -ne 0) { throw "release publication failed" }

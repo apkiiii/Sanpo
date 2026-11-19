@@ -1,0 +1,4 @@
+# Build-time dependencies of the Windows application (installed by the CI build)
+pywebview==5.4
+pyinstaller==6.22.3
+pyinstaller-hooks-contrib==2026.10

@@ -1,20 +1,25 @@
-FOREX AI MASTER - application de bureau (Windows)
-==================================================
+FOREX AI MASTER - logiciel Windows
+==================================
 
 Ce logiciel fonctionne en MODE SIMULATION uniquement : compte démo avec de
 l'argent fictif. Il n'envoie jamais d'ordre réel.
 
-Démarrer
---------
-1. Double-cliquez sur ForexAIMaster.exe.
-   Windows peut afficher "Windows a protégé votre ordinateur" (le fichier
-   n'est pas signé) : cliquez sur "Informations complémentaires" puis
-   "Exécuter quand même".
-2. Une fenêtre noire s'ouvre (le moteur du logiciel), puis le tableau de bord
-   s'ouvre dans votre navigateur (http://127.0.0.1:8765).
-3. Au premier lancement, choisissez un identifiant et un mot de passe
+Installation
+------------
+- ForexAIMaster-Setup.exe : installe le logiciel (sans droits administrateur)
+  et crée l'icône "Forex AI Master" sur le Bureau et dans le menu Démarrer.
+- ForexAIMaster.exe : version portable, se lance sans installation.
+Windows peut afficher "Windows a protégé votre ordinateur" (fichiers non
+signés) : cliquez sur "Informations complémentaires" puis "Exécuter quand même".
+
+Utilisation
+-----------
+1. Double-cliquez sur l'icône Forex AI Master : le logiciel s'ouvre dans sa
+   propre fenêtre.
+2. Au premier lancement, choisissez un identifiant et un mot de passe
    (12 caractères minimum).
-4. Pour arrêter : fermez la fenêtre noire.
+3. Pour quitter : fermez la fenêtre. Votre compte démo est conservé.
+Le logiciel ne peut être ouvert qu'une fois à la fois.
 
 Compte démo
 -----------
@@ -30,6 +35,6 @@ Dossier : %APPDATA%\ForexAIMaster
 - settings.env : capital de départ, taille minimale, limites de risque,
   vitesse de la simulation (redémarrer après modification).
 - forex_ai_master.db : votre compte démo et l'historique.
+- forex_ai_master.log : journal (utile en cas de problème).
 - Pour tout recommencer à zéro : fermez le logiciel et supprimez ce dossier.
-
-Le tableau de bord n'est accessible que depuis cet ordinateur.
+Ce dossier est conservé si vous désinstallez le logiciel.
