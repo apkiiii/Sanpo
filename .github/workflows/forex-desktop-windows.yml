@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # publish the .exe as a GitHub Release (direct download link)
 
 jobs:
   windows-exe:
@@ -62,3 +62,16 @@ jobs:
             forex-ai-master/dist/LISEZMOI.txt
             forex-ai-master/dist/SHA256.txt
           retention-days: 30
+
+      - name: Publish as a GitHub Release (direct download link)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "forex-ai-master-windows"
+          gh release delete $tag --cleanup-tag --yes 2>$null
+          $global:LASTEXITCODE = 0
+          gh release create $tag dist/ForexAIMaster.exe dist/LISEZMOI.txt dist/SHA256.txt `
+            --target $env:GITHUB_SHA --title "Forex AI Master - Windows (compte démo)" `
+            --notes-file desktop/RELEASE_NOTES.md --prerelease
+          if ($LASTEXITCODE -ne 0) { throw "release publication failed" }
