@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentView, Alert, Decision, Dict, Snapshot } from "./api";
-import { api, getToken, login, openFeed, setToken, setupAccount, time } from "./api";
+import { api, getToken, login, openFeed, setToken, setupAccount } from "./api";
 import { Badge } from "./components/ui";
+import SimulationControl from "./components/SimulationControl";
+import UpdateBanner from "./components/UpdateBanner";
 import Bots from "./pages/Bots";
 import Master from "./pages/Master";
 import Overview from "./pages/Overview";
@@ -131,9 +133,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {snap && <Badge value={snap.mode === "live" ? "critical" : snap.mode === "demo" ? "warning" : "ok"} />}
         {snap && <span className="text-sm font-semibold uppercase">{snap.mode}</span>}
         <span className={`text-xs ${live ? "text-emerald-400" : "text-slate-500"}`}>● {live ? "temps réel" : "hors ligne"}</span>
-        {snap?.replay_time && <span className="text-xs text-slate-400">rejeu : {time(snap.replay_time)}</span>}
+        {snap?.app_version && <span className="text-xs text-slate-500">version {snap.app_version}</span>}
         <button className="btn ml-auto bg-slate-800 hover:bg-slate-700" onClick={onLogout}>Déconnexion</button>
       </header>
+
+      <UpdateBanner isAdmin={role === "admin"} />
+      {snap?.simulation && <SimulationControl sim={snap.simulation} isAdmin={role === "admin"} onChange={refresh} />}
 
       {snap?.synthetic_data && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">

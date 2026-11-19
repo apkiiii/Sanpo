@@ -60,9 +60,12 @@ def create_app(settings: Settings | None = None, runtime: TradingRuntime | None 
         if start_loop:
             await app.state.runtime.stop()
 
-    app = FastAPI(title="Forex AI Master", version="0.1.0", lifespan=lifespan,
+    from backend.version import APP_VERSION
+
+    app = FastAPI(title="Forex AI Master", version=APP_VERSION, lifespan=lifespan,
                   docs_url="/api/docs" if settings.trading_mode.value == "simulation" else None, redoc_url=None)
     app.state.runtime = runtime
+    app.state.shutdown_request = None  # set by the desktop launcher (used by the auto-update)
     app.state.auth = AuthService(settings)
     limiter = RateLimiter(settings.api_rate_limit_per_minute)
     login_limiter = RateLimiter(10)

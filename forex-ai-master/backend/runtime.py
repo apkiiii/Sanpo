@@ -67,6 +67,7 @@ class TradingRuntime:
             if not ok:
                 raise ConfigurationError(f"audit log integrity check failed at entry {bad}")
         self.replay_cursor: datetime | None = None
+        self._replay_end: datetime | None = None
         self.synthetic = False
         if settings.trading_mode is TradingMode.SIMULATION:
             data = data or self._simulation_data()
@@ -90,6 +91,12 @@ class TradingRuntime:
         self._task: asyncio.Task[None] | None = None
         self._stop = asyncio.Event()
         self.cycles = 0
+        self.step_seconds = settings.simulation_step_seconds
+        self.running = settings.trading_mode is not TradingMode.SIMULATION or settings.simulation_autostart
+        saved_ctl = repo.load_state("sim_control") if repo is not None else None
+        if saved_ctl and settings.trading_mode is TradingMode.SIMULATION:
+            self.running = bool(saved_ctl.get("running", self.running))
+            self.step_seconds = float(saved_ctl.get("step_seconds", self.step_seconds))
         self.alerts.dashboard.subscribers.append(self._on_alert)
         self.audit.record("system", "startup", {"mode": settings.trading_mode.value, "broker": self.broker.name,
                                                 "validated_strategies_loaded": loaded,
@@ -170,6 +177,9 @@ class TradingRuntime:
     async def _loop(self) -> None:
         simulation = self.settings.trading_mode is TradingMode.SIMULATION
         while not self._stop.is_set():
+            if simulation and not self.running:  # paused: the simulated market does not move
+                await asyncio.sleep(0.25)
+                continue
             if simulation:
                 now = self.replay_cursor or utcnow()
             else:
@@ -182,7 +192,7 @@ class TradingRuntime:
                 if self._advance_replay() is None:
                     self.alerts.send(AlertType.SYSTEM, AlertLevel.INFO, "Replay finished", "End of historical data.")
                     return
-                await asyncio.sleep(self.settings.simulation_step_seconds)
+                await asyncio.sleep(self.step_seconds)
             else:
                 await asyncio.sleep(self.settings.cycle_interval_seconds)
 
@@ -197,6 +207,40 @@ class TradingRuntime:
                                                 "source": self.settings.simulation_data_source})
         except Exception:  # noqa: BLE001
             log.exception("demo state persistence failed")
+
+    # ------------------------------------------------------------------ simulation control
+    MIN_STEP, MAX_STEP = 0.02, 10.0
+
+    def set_running(self, running: bool, actor: str) -> dict[str, Any]:
+        """Start or pause the simulated market (SIMULATION only). Positions stay protected by their stops."""
+        if self.settings.trading_mode is not TradingMode.SIMULATION:
+            raise ConfigurationError("the trading simulation can only be started or paused in SIMULATION mode")
+        if self.replay_cursor is not None and self._replay_end and self.replay_cursor >= self._replay_end:
+            raise ConfigurationError("the simulated market has reached the end of its data")
+        self.running = running
+        self.audit.record(actor, "simulation_started" if running else "simulation_paused",
+                          {"replay_time": self.replay_cursor.isoformat() if self.replay_cursor else None})
+        self._save_control()
+        return self.simulation_status()
+
+    def set_speed(self, step_seconds: float, actor: str) -> dict[str, Any]:
+        if self.settings.trading_mode is not TradingMode.SIMULATION:
+            raise ConfigurationError("speed applies to the SIMULATION mode only")
+        if not self.MIN_STEP <= step_seconds <= self.MAX_STEP:
+            raise ValueError(f"step must be between {self.MIN_STEP} and {self.MAX_STEP} seconds")
+        self.step_seconds = step_seconds
+        self.audit.record(actor, "simulation_speed", {"step_seconds": step_seconds})
+        self._save_control()
+        return self.simulation_status()
+
+    def simulation_status(self) -> dict[str, Any]:
+        return {"available": self.settings.trading_mode is TradingMode.SIMULATION, "running": self.running,
+                "step_seconds": self.step_seconds,
+                "replay_time": self.replay_cursor.isoformat() if self.replay_cursor else None}
+
+    def _save_control(self) -> None:
+        if self.repo is not None:
+            self.repo.save_state("sim_control", {"running": self.running, "step_seconds": self.step_seconds})
 
     def cash_flow(self, amount: float, actor: str) -> dict[str, Any]:
         result = self.master.cash_flow(amount, actor)
@@ -235,6 +279,9 @@ class TradingRuntime:
         st["synthetic_data"] = self.synthetic
         st["replay_time"] = self.replay_cursor.isoformat() if self.replay_cursor else None
         st["cycles"] = self.cycles
+        st["simulation"] = self.simulation_status()
+        from backend.version import APP_VERSION
+        st["app_version"] = APP_VERSION
         st["cash_history"] = self.broker.cash_history()[-20:] if isinstance(self.broker, SimulatedBroker) else []
         st["decisions"] = [d.to_dict() for d in list(self.master.decisions)[:50]]
         return st

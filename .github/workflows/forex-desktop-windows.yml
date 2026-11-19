@@ -70,7 +70,8 @@ jobs:
         run: |
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y | Out-Null }
-          & $iscc desktop\installer.iss
+          $v = python -c "from backend.version import APP_VERSION; print(APP_VERSION)"
+          & $iscc "/DAppVersion=$v" desktop\installer.iss
           if ($LASTEXITCODE -ne 0) { throw "installer build failed" }
 
       - name: Test the installer (silent install, shortcuts, launch)
@@ -91,6 +92,11 @@ jobs:
       - name: Package
         run: |
           Copy-Item desktop\LISEZMOI.txt dist\
+          $v = python -c "from backend.version import APP_VERSION; print(APP_VERSION)"
+          $sha = (Get-FileHash dist\ForexAIMaster-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          $manifest = @{ version = $v; sha256 = $sha; url = "https://github.com/apkiiii/Sanpo/releases/download/forex-ai-master-windows/ForexAIMaster-Setup.exe" }
+          $manifest | ConvertTo-Json | Out-File -Encoding utf8NoBOM dist\latest.json
+          Get-Content dist\latest.json
           Get-FileHash dist\ForexAIMaster-Setup.exe, dist\ForexAIMaster.exe -Algorithm SHA256 | Format-List | Out-File dist\SHA256.txt
 
       - uses: actions/upload-artifact@v4
@@ -101,6 +107,7 @@ jobs:
             forex-ai-master/dist/ForexAIMaster.exe
             forex-ai-master/dist/LISEZMOI.txt
             forex-ai-master/dist/SHA256.txt
+            forex-ai-master/dist/latest.json
           retention-days: 30
 
       - name: Publish as a GitHub Release (direct download links)
@@ -112,7 +119,7 @@ jobs:
           gh release delete $tag --cleanup-tag --yes 2>$null
           $global:LASTEXITCODE = 0
           Add-Content desktop/RELEASE_NOTES.md "`n_Contrôle automatique de la fenêtre de l'application sur Windows : $env:GUI_OUTCOME._"
-          gh release create $tag dist/ForexAIMaster-Setup.exe dist/ForexAIMaster.exe dist/LISEZMOI.txt dist/SHA256.txt `
+          gh release create $tag dist/ForexAIMaster-Setup.exe dist/ForexAIMaster.exe dist/LISEZMOI.txt dist/SHA256.txt dist/latest.json `
             --target $env:GITHUB_SHA --title "Forex AI Master - Windows (compte démo)" `
             --notes-file desktop/RELEASE_NOTES.md --prerelease
           if ($LASTEXITCODE -ne 0) { throw "release publication failed" }

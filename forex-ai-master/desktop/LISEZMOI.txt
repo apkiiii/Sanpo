@@ -21,6 +21,19 @@ Utilisation
 3. Pour quitter : fermez la fenêtre. Votre compte démo est conservé.
 Le logiciel ne peut être ouvert qu'une fois à la fois.
 
+Simulation de trading
+---------------------
+- En haut de la fenêtre : bouton "Démarrer la simulation de trading".
+  Tant qu'il n'est pas activé, le marché simulé est à l'arrêt et aucun trade n'est pris.
+- "Mettre en pause" arrête le marché ; les positions ouvertes gardent leurs stops.
+- Vitesse : Lente, Normale, Rapide, Très rapide.
+
+Mises à jour
+------------
+Quand une nouvelle version existe, un bandeau "Mise à jour disponible" apparaît
+dans le logiciel. Cliquez sur "Installer la mise à jour" : le logiciel se ferme,
+s'installe et se rouvre tout seul. Votre compte démo et vos réglages sont conservés.
+
 Compte démo
 -----------
 - Capital fictif de départ : 40 $.

@@ -29,6 +29,9 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
+if not getattr(sys, "frozen", False):  # running from the sources: make the project importable
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 APP_NAME = "Forex AI Master"
 LOCK_PORT = 8764  # held for the life of the process: guarantees a single instance
 
@@ -36,6 +39,7 @@ DEFAULTS = {
     "TRADING_MODE": "simulation",
     "SIMULATION_DATA_SOURCE": "synthetic",
     "SIMULATION_STEP_SECONDS": "1",
+    "SIMULATION_AUTOSTART": "false",  # the user starts the trading simulation with the button
     "INITIAL_BALANCE": "40",
     "MIN_TRADE_UNITS": "1",
     "TRADE_UNITS_STEP": "1",
@@ -108,6 +112,7 @@ def prepare_environment(d: Path) -> None:
     os.environ.setdefault("STRATEGY_VALIDATION_PATH", str(d / "strategy_validation.json"))
     os.environ.setdefault("HISTORICAL_DATA_DIR", str(d / "historical"))
     os.environ["TRADING_MODE"] = "simulation"  # the desktop build never trades real money
+    os.environ["FAM_DESKTOP"] = "1"  # enables the in-app update button
     os.chdir(d)
 
 
@@ -163,7 +168,10 @@ class LocalServer:
         configure_logging(settings.log_level)
         logging.getLogger().handlers[:] = [logging.StreamHandler(sys.stdout)]
         self.url = f"http://127.0.0.1:{port}/"
-        self.server = uvicorn.Server(uvicorn.Config(create_app(settings), host="127.0.0.1", port=port,
+        self.app = create_app(settings)
+        self.close_window: object = None  # set when the application window exists
+        self.app.state.shutdown_request = self.request_shutdown
+        self.server = uvicorn.Server(uvicorn.Config(self.app, host="127.0.0.1", port=port,
                                                     log_level="warning", ws="websockets", lifespan="on",
                                                     log_config=None))
         self.thread = threading.Thread(target=self.server.run, daemon=True, name="server")
@@ -178,6 +186,15 @@ class LocalServer:
                 return False
             time.sleep(0.1)
         return False
+
+    def request_shutdown(self) -> None:
+        """Close the application (used by the auto-update so the installer can replace the files)."""
+        if callable(self.close_window):
+            self.close_window()
+        else:
+            self.server.should_exit = True
+            if sys.platform == "win32":
+                os._exit(0)
 
     def stop(self) -> None:
         self.server.should_exit = True
@@ -206,6 +223,7 @@ def run_window(srv: LocalServer, smoke_file: str | None = None) -> int:
 
     window = webview.create_window(APP_NAME, srv.url, width=1360, height=900, min_size=(980, 680),
                                    background_color="#0b1118", text_select=True)
+    srv.close_window = window.destroy
     result: dict[str, object] = {}
 
     def smoke() -> None:

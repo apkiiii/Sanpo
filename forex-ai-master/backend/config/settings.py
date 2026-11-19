@@ -136,6 +136,7 @@ class Settings(BaseSettings):
     historical_data_dir: str = "data/historical"
     simulation_data_source: str = "csv"  # "csv" (verified history replay) or "synthetic" (pipeline demo only)
     simulation_step_seconds: float = Field(1.0, ge=0.0)
+    simulation_autostart: bool = True  # False: the simulated market waits for the "Démarrer" button
     synthetic_bars: int = Field(150_000, ge=30_000)  # M5 bars of generated market (~1.5 years)
     simulation_start: str = ""  # ISO date to start the replay; default = 60 days after data start
     strategy_validation_path: str = "var/strategy_validation.json"

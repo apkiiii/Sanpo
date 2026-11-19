@@ -8,6 +8,12 @@ Désinstallation : Paramètres Windows › Applications › Forex AI Master.
 ### Version portable
 **ForexAIMaster.exe** : se lance directement, sans installation.
 
+### Nouveautés de la version 1.1.0
+- Bouton **Démarrer / Mettre en pause la simulation de trading**, avec réglage de la vitesse.
+- **Mises à jour automatiques** : le logiciel signale les nouvelles versions et les installe en un clic.
+  Pour passer de la 1.0.0 à la 1.1.0, installez une fois cet installateur par-dessus l'ancienne version
+  (votre compte démo est conservé).
+
 ### À savoir
 - Le logiciel s'ouvre dans sa propre fenêtre (moteur Microsoft Edge WebView2, présent sur Windows 10/11).
 - Mode **simulation uniquement** : argent fictif, aucun ordre réel ne peut être envoyé.

@@ -48,8 +48,17 @@ export interface Decision {
   risk_checks: Record<string, { ok: boolean; detail: string }> | null;
 }
 
+export interface SimulationStatus {
+  available: boolean;
+  running: boolean;
+  step_seconds: number;
+  replay_time: string | null;
+}
+
 export interface Snapshot {
   mode: string;
+  simulation?: SimulationStatus;
+  app_version?: string;
   cash_history: { time: string; amount: number }[];
   synthetic_data: boolean;
   replay_time: string | null;

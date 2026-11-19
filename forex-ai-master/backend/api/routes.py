@@ -35,6 +35,10 @@ class AmountBody(BaseModel):
     amount: float = Field(gt=0, le=100_000_000)
 
 
+class SpeedBody(BaseModel):
+    step_seconds: float = Field(ge=0.02, le=10)
+
+
 class KillSwitchBody(BaseModel):
     reason: str = Field(min_length=3, max_length=200)
 
@@ -189,6 +193,43 @@ def deposit(body: AmountBody, request: Request, user: Principal = Depends(requir
 def withdraw(body: AmountBody, request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
     """Remove fictitious money from the SIMULATION demo account (limited to free margin)."""
     return rt(request).cash_flow(-body.amount, user.username)
+
+
+@router.post("/simulation/start")
+def simulation_start(request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    """Start the simulated market: the bots analyse and trade on the demo account."""
+    return rt(request).set_running(True, user.username)
+
+
+@router.post("/simulation/pause")
+def simulation_pause(request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    """Pause the simulated market: time stops, open positions keep their stop-loss and take-profit."""
+    return rt(request).set_running(False, user.username)
+
+
+@router.put("/simulation/speed")
+def simulation_speed(body: SpeedBody, request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    return rt(request).set_speed(body.step_seconds, user.username)
+
+
+@router.get("/app/update")
+def app_update_status(request: Request, _: Principal = Depends(current_user)) -> dict[str, Any]:
+    """Current version and, in the Windows application, whether a newer version is available."""
+    from backend import updater
+    return updater.check()
+
+
+@router.post("/app/update")
+def app_update_install(request: Request, user: Principal = Depends(require_admin)) -> dict[str, Any]:
+    """Download (checksum verified) and install the latest version, then restart the application."""
+    from backend import updater
+    if not updater.is_desktop():
+        raise HTTPException(status.HTTP_409_CONFLICT, "automatic update is only available in the Windows application")
+    rt(request).audit.record(user.username, "app_update_requested", {"from": updater.APP_VERSION})
+    rt(request).persist()
+    import threading
+    shutdown = getattr(request.app.state, "shutdown_request", None)
+    return updater.install(lambda: threading.Timer(1.5, shutdown).start() if shutdown else None)
 
 
 @router.put("/session/target")

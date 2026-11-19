@@ -2,7 +2,9 @@
 ; Per-user install: no administrator rights needed.
 
 #define AppName "Forex AI Master"
-#define AppVersion "1.0.0"
+#ifndef AppVersion
+  #define AppVersion "1.0.0"
+#endif
 #define AppExe "ForexAIMaster.exe"
 
 [Setup]
@@ -43,5 +45,13 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Lancer {#AppName}"; Flags: nowait postinstall skipifsilent
+; automatic update from inside the application: reopen it once the files are replaced
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: IsRelaunch
+
+[Code]
+function IsRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
+end;
 
 ; The demo account and settings live in %APPDATA%\ForexAIMaster and are kept on uninstall.
